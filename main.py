@@ -18,6 +18,16 @@ def create_loci(inputFile):
     return faGenes
 
 
+def extract_fa_genes(prevFaSubnetworkFile):
+    module1FASubnetwork = []
+    with open(prevFaSubnetworkFile, "r") as file:
+        for row in file:
+            row = row.split("\t")
+            row[2] = row[2].strip()
+            module1FASubnetwork.append(row)
+    return module1FASubnetwork
+
+
 def generate_12_genes():
     faGenes = create_loci("Input.gmt.txt")
     genesForSubnetwork = set()
@@ -33,11 +43,9 @@ def generate_12_genes():
     print(len(genesForSubnetwork'))"""
 
 
-def create_individual_subnetwork(prevFaSubnetwork):
+def create_individual_subnetwork(module1FASubnetwork):
     subnetworkToWrite = []
-    module1FASubnetwork = []
     flattenedSubnetwork = []
-
     """geneSet12 = [
         "PPM1D",
         "ERN1",
@@ -52,17 +60,7 @@ def create_individual_subnetwork(prevFaSubnetwork):
         "SLX4",
         "CORO7",
     ]"""
-
-    prevFaSubnetworkFile = open(prevFaSubnetwork, "r")
-    # finalSubnetworks = open("output.txt", "w")
-
     geneSet12 = generate_12_genes()
-
-    for row in prevFaSubnetworkFile:
-        row = row.split("\t")
-        row[2] = row[2].strip()
-        module1FASubnetwork.append(row)
-    prevFaSubnetworkFile.close()
 
     for gene in geneSet12:
         for row in module1FASubnetwork:
@@ -78,44 +76,35 @@ def create_individual_subnetwork(prevFaSubnetwork):
     for gene in geneSet12:
         if gene not in flattenedSubnetwork:
             subnetworkToWrite.append(gene)
-    """for row in module1FASubnetwork:
-        # A: fully inclusive
-       if (row[0] in geneSet12) and (row[1] in geneSet12):
-        print(f"Row from mod 1 in subnetwork {row}")
-        subnetworkToWrite.append(row)
-        # B
-        if row[0] in subnetwork or row[1] in subnetwork:
-            print(f"row 1: {row}")
-            flattenedSubnetwork.append(row)
-            # finalSubnetworks.write(row + "\n")
-        print(len(flattenedSubnetwork))"""
-
-    # A
-    """for gene in geneSet12:
-        if len(subnetworkToWrite) == 0:
-            subnetworkToWrite.append(gene + "\n")
-        else:
-            if isinstance(gene, list):
-                if (
-                    gene[0] not in subnetworkToWrite
-                    and gene[1] not in subnetworkToWrite
-                ):
-                    subnetworkToWrite.append(gene + "\n")
-
-            elif isinstance(gene, str):
-                if gene not in subnetworkToWrite:
-                    subnetworkToWrite.append(gene + "\n")"""
-
-    print(f"len of subnetwork: {len(subnetworkToWrite)} | {subnetworkToWrite}")
     return subnetworkToWrite
 
 
-def create_random_subnetworks(prevFaSubnetwork, outputFile):
-    print("here")
+def create_random_subnetworks():
+    module1FASubnetwork = extract_fa_genes("results.txt")
+
+    finalList = []
+
+    print(len(module1FASubnetwork))
+    with open("output.txt", "w") as outputFile:
+        i = 0
+
+        while i < 5000:
+            individualSubnetwork = []
+            individualSubnetwork = create_individual_subnetwork(
+                module1FASubnetwork=module1FASubnetwork
+            )
+            print(individualSubnetwork)
+            finalList.append(individualSubnetwork)
+            i += 1
+        for item in finalList:
+            outputFile.write(str(item) + "\n")
+            """item = "\t".join(item) + "\n"
+            print(f"write: {item}")
+            outputFile.write(item)"""
 
 
 def main():
-    create_individual_subnetwork("results.txt")
+    create_random_subnetworks()
 
 
 if __name__ == "__main__":
