@@ -1,4 +1,18 @@
 import random
+import json
+
+
+def fanconi_anemia_genes(inputFile):
+    faData = []
+    faGenes = []
+
+    with open(inputFile, "r") as file:
+        faData = [row.strip().split("\t")[2:] for row in file]
+
+    for row in faData:
+        faGenes.extend(row)
+
+    return faGenes
 
 
 def create_loci(inputFile):
@@ -12,9 +26,6 @@ def create_loci(inputFile):
             genes = [gene.strip() for gene in genes]
             faGenes.update({key: {"genes": genes}})
 
-        """for key, value in faGenes.items():
-            print(key, value)
-            print("\n")"""
     return faGenes
 
 
@@ -26,6 +37,33 @@ def extract_fa_genes(prevFaSubnetworkFile):
             row[2] = row[2].strip()
             module1FASubnetwork.append(row)
     return module1FASubnetwork
+
+
+def extract_nonfa_genes(inputFile, faGenes):
+    """nonfaGenes = set()
+    faGenes = set(faGenes)
+    with open(inputFile, "r") as file:
+        parentNetwork = [row.strip().split("\t")[:1] for row in file]
+        allGenes = set(
+            [gene for row in parentNetwork for gene in row]
+        )  # Create a set of all genes in the parent network
+        print(len(allGenes))
+        nonfaGenes = allGenes - faGenes"""
+
+    nonfaGenes = set()
+    faGenes = set(faGenes)
+    with open(inputFile, "r") as file:
+        parentNetwork = [row.split("\t") for row in file]
+        print
+        for row in parentNetwork:
+            if row[0] not in faGenes:
+                nonfaGenes.add(row[0])
+            if row[1] not in faGenes:
+                nonfaGenes.add(row[1])
+        # HOW MANY LINES DID EVERYONE ELSE GET
+        print(len(nonfaGenes))
+
+    return nonfaGenes
 
 
 def generate_12_genes():
@@ -83,28 +121,42 @@ def create_random_subnetworks():
     module1FASubnetwork = extract_fa_genes("results.txt")
 
     finalList = []
+    finalDictionary = {}
 
     print(len(module1FASubnetwork))
-    with open("output.txt", "w") as outputFile:
-        i = 0
 
-        while i < 5000:
-            individualSubnetwork = []
-            individualSubnetwork = create_individual_subnetwork(
-                module1FASubnetwork=module1FASubnetwork
-            )
-            print(individualSubnetwork)
-            finalList.append(individualSubnetwork)
-            i += 1
-        for item in finalList:
-            outputFile.write(str(item) + "\n")
-            """item = "\t".join(item) + "\n"
-            print(f"write: {item}")
-            outputFile.write(item)"""
+    i = 0
+
+    while i < 5000:
+        individualSubnetwork = []
+        individualSubnetwork = create_individual_subnetwork(
+            module1FASubnetwork=module1FASubnetwork
+        )
+        finalList.append(individualSubnetwork)
+        i += 1
+
+    for index, item in enumerate(finalList):
+        index = str(index)
+        finalDictionary.update({index: item})
+    with open("random_subnetworks.json", "w") as outputFile:
+        json.dump(finalDictionary, outputFile)
+
+    return finalList
+
+
+def create_secondary_subnetwork(parentSubnetwork, nonfaGenes):
+    print(len(nonfaGenes))
+    """for row in nonfaGenes:
+        print(row)"""
 
 
 def main():
-    create_random_subnetworks()
+    faGenes = fanconi_anemia_genes("STRING 1.txt")
+    nonfaGenes = extract_nonfa_genes("STRING 1.txt", faGenes=faGenes)
+    parentSubnetwork = create_random_subnetworks()
+    create_secondary_subnetwork(
+        parentSubnetwork=parentSubnetwork, nonfaGenes=nonfaGenes
+    )
 
 
 if __name__ == "__main__":
