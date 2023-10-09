@@ -5,13 +5,10 @@ import json
 def fanconi_anemia_genes(inputFile):
     faData = []
     faGenes = []
-
     with open(inputFile, "r") as file:
         faData = [row.strip().split("\t")[2:] for row in file]
-
     for row in faData:
         faGenes.extend(row)
-
     return faGenes
 
 
@@ -40,45 +37,68 @@ def extract_fa_genes(prevFaSubnetworkFile):
 
 
 def extract_nonfa_genes(inputFile, faGenes):
-    """nonfaGenes = set()
+    nonfaGenesSet = set()
+    nonfaGenes = {}
     faGenes = set(faGenes)
-    with open(inputFile, "r") as file:
-        parentNetwork = [row.strip().split("\t")[:1] for row in file]
-        allGenes = set(
-            [gene for row in parentNetwork for gene in row]
-        )  # Create a set of all genes in the parent network
-        print(len(allGenes))
-        nonfaGenes = allGenes - faGenes"""
 
-    nonfaGenes = set()
-    faGenes = set(faGenes)
     with open(inputFile, "r") as file:
         parentNetwork = [row.split("\t") for row in file]
-        print
-        for row in parentNetwork:
-            if row[0] not in faGenes:
-                nonfaGenes.add(row[0])
-            if row[1] not in faGenes:
-                nonfaGenes.add(row[1])
-        # HOW MANY LINES DID EVERYONE ELSE GET
-        print(len(nonfaGenes))
+
+    for row in parentNetwork:
+        if row[0] not in faGenes:
+            if row[0] not in nonfaGenes:
+                nonfaGenes[row[0]] = 0
+            nonfaGenes[row[0]] += 1
+        if row[1] not in faGenes:
+            if row[1] not in nonfaGenes:
+                nonfaGenes[row[1]] = 0
+            nonfaGenes[row[1]] += 1
 
     return nonfaGenes
 
 
+def create_bins(inputFile):
+    countPerGene = {}
+    bins = {}
+    with open(inputFile, "r") as file:
+        results = [row.split("\t")[:2] for row in file]
+
+    for row in results:
+        if row[0] not in countPerGene:
+            countPerGene[row[0]] = 0
+        elif row[0] in countPerGene:
+            countPerGene[row[0]] += 1
+
+        if row[1] not in countPerGene:
+            countPerGene[row[1]] = 0
+        elif row[1] in countPerGene:
+            countPerGene[row[1]] += 1
+
+    sorted_dict = dict(sorted(countPerGene.items(), key=lambda item: item[1]))
+
+    for item in sorted_dict:
+        bins.setdefault(sorted_dict[item], []).append(item)
+
+    with open("bins.json", "w") as outputFile:
+        json.dump(bins, outputFile)
+
+    return bins
+
+
 def generate_12_genes():
     faGenes = create_loci("Input.gmt.txt")
+
     genesForSubnetwork = set()
+
+    ##REFACTOR
     for index, item in enumerate(faGenes):
         random_int = random.randint(0, len(faGenes[item]["genes"]))
         try:
             genesForSubnetwork.add(faGenes[item]["genes"][random_int])
         except IndexError:
-            random_int = random.randint(0, len(faGenes[item]["genes"]) / 2)
+            random_int = random.randrange(0, len(faGenes[item]["genes"]))
             genesForSubnetwork.add(faGenes[item]["genes"][random_int])
     return list(genesForSubnetwork)
-    """[print(f"row{row}") for row in genesForSubnetwork]
-    print(len(genesForSubnetwork'))"""
 
 
 def create_individual_subnetwork(module1FASubnetwork):
@@ -114,6 +134,13 @@ def create_individual_subnetwork(module1FASubnetwork):
     for gene in geneSet12:
         if gene not in flattenedSubnetwork:
             subnetworkToWrite.append(gene)
+
+    subnetworkToWrite = [
+        sublist
+        for i, sublist in enumerate(subnetworkToWrite)
+        if sublist not in subnetworkToWrite[:i]
+    ]
+
     return subnetworkToWrite
 
 
@@ -122,9 +149,6 @@ def create_random_subnetworks():
 
     finalList = []
     finalDictionary = {}
-
-    print(len(module1FASubnetwork))
-
     i = 0
 
     while i < 5000:
@@ -141,21 +165,65 @@ def create_random_subnetworks():
     with open("random_subnetworks.json", "w") as outputFile:
         json.dump(finalDictionary, outputFile)
 
-    return finalList
+    return finalDictionary
 
 
-def create_secondary_subnetwork(parentSubnetwork, nonfaGenes):
-    print(len(nonfaGenes))
-    """for row in nonfaGenes:
-        print(row)"""
+# Mating or 1:1 (fa to nonfa) replacement
+def create_secondary_subnetwork(parentSubnetwork, nonfaGenes, bins):
+    newSubnetwork = {}
+    newRandomSubnetList = []
+    newRandomSubnetListToWrite = []
+
+    # for each subnetwork in first round of subnetworks
+    for subnet in parentSubnetwork:
+        gene = ""
+        gene2 = ""
+
+        # for each gene in subnetwork
+        for item in parentSubnetwork[subnet]:
+            newGene = ""
+            print(len(bins))
+            if isinstance(item, list):
+                gene = item[0]
+                gene2 = item[1]
+                # print(f"gene: {gene} | gene2: {gene2}")
+
+                # gene = first element in the sublist of the subnetwork
+                # for each bin in the bins object
+                """for bin in bins:
+                    if gene in bins[bin]:
+                        if gene in nonfaGenes.keys():
+                            newRandomSubnetList.append(gene)
+                            print(
+                                f"Gene from parent: {gene} | bin: {bins}|{bins[bin]}\n"
+                            )
+                            # print(newRandomSubnetList)
+
+                        # print(bins[bin][random.randrange(0, len(bins[bin]))])
+                        newGene = bins[bin][random.randrange(0, len(bins[bin]))]
+                        if newGene in nonfaGenes.keys():
+                            newRandomSubnetList.append(newGene)"""
+                # print(gene + " " + newGene)
+            else:
+                gene = item
 
 
 def main():
+    ##TEST TO SEE HOW MANY ROWS ARE IN NONFAGENES
+    """with open("STRING 1.txt", "r") as file:
+    se = set()
+    results = [row.split("\t")[:2] for row in file]
+    for i in results:
+        for j in i:
+            se.add(j)
+    print(len(se))"""
+
     faGenes = fanconi_anemia_genes("STRING 1.txt")
     nonfaGenes = extract_nonfa_genes("STRING 1.txt", faGenes=faGenes)
     parentSubnetwork = create_random_subnetworks()
+    bins = create_bins("STRING 1.txt")
     create_secondary_subnetwork(
-        parentSubnetwork=parentSubnetwork, nonfaGenes=nonfaGenes
+        parentSubnetwork=parentSubnetwork, nonfaGenes=nonfaGenes, bins=bins
     )
 
 
