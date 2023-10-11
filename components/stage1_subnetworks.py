@@ -3,9 +3,10 @@ import random
 
 
 class Stage1_SubNetworks:
-    def __init__(self, prevFaSubnetworkFile, inputFile):
+    def __init__(self, prevFaSubnetworkFile, faInputFile, stringInputFile):
         self.prevFaSubnetworkFile = prevFaSubnetworkFile
-        self.faInputFile = inputFile
+        self.faInputFile = faInputFile
+        self.stringInputFile = stringInputFile
         self.module1FASubnetwork = []
         self.faGenes = []
 
@@ -49,11 +50,11 @@ class Stage1_SubNetworks:
     def create_individual_subnetwork(self, module1FASubnetwork):
         subnetworkToWrite = []
         flattenedSubnetwork = []
-
+        parentNetwork = []
         geneSet12 = self.generate_12_genes()
 
         for gene in geneSet12:
-            for row in self.module1FASubnetwork:
+            for row in module1FASubnetwork:
                 if gene == row[0] and row[1] in geneSet12:
                     subnetworkToWrite.append(row)
                 elif gene == row[1] and row[0] in geneSet12:
@@ -69,13 +70,20 @@ class Stage1_SubNetworks:
 
         subnetworkToWrite = [
             sublist
-            for i, sublist in enumerate(subnetworkToWrite)
-            if sublist not in subnetworkToWrite[:i]
+            for index, sublist in enumerate(subnetworkToWrite)
+            if sublist not in subnetworkToWrite[:index]
         ]
 
+        """with open(self.stringInputFile, "r") as file:
+            parentNetwork = [row.split("\t") for row in file]
+
+        for gene in flattenedSubnetwork:
+            print(gene)
+"""
         return subnetworkToWrite
 
     def create_random_subnetworks(self):
+        print("Creating first round of subnetworks...")
         module1FASubnetwork = self.extract_fa_genes()
 
         finalList = []
@@ -92,8 +100,12 @@ class Stage1_SubNetworks:
 
         for index, item in enumerate(finalList):
             index = str(index)
-            finalDictionary.update({index: item})
-        with open("random_subnetworks.json", "w") as outputFile:
+            edgeCount = 0
+            for gene in item:
+                if isinstance(gene, list):
+                    edgeCount += 1
+            finalDictionary.update({index: {edgeCount: item}})
+        with open("stage1_random_subnetworks.json", "w") as outputFile:
             json.dump(finalDictionary, outputFile)
-
+        print("First 5,000 subnetworks created")
         return finalDictionary
