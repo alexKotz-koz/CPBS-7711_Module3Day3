@@ -6,46 +6,68 @@ from components.nonfagenes import NonFaGenes
 from components.stage1_subnetworks import Stage1_SubNetworks
 
 
+def find_bin(gene, bins):
+    binToReturn = []
+    for bin in bins:
+        if gene in bins[bin]:
+            binToReturn = bins[bin]
+
+    return binToReturn
+
+
 # Mating or 1:1 (fa to nonfa) replacement
-def create_secondary_subnetwork(parentSubnetwork, nonfaGenes, bins):
-    bins = bins.create_bins()
-    parentSubnetwork = parentSubnetwork.create_random_subnetworks()
+def create_secondary_subnetwork(parentSubnetworks, nonfaGenes, bins):
     newSubnetwork = {}
-    newRandomSubnetList = []
+
     newRandomSubnetListToWrite = []
 
+    nonfaGenes = set(nonfaGenes.keys())
+
     # for each subnetwork in first round of subnetworks
-    for subnet in parentSubnetwork:
+    keyForNewDictionary = 0
+
+    for subnet in parentSubnetworks:
+        print(subnet["subnet"].values())
         gene = ""
         gene2 = ""
-
+        newRandomSubnetList = []
         # for each gene in subnetwork
-        for item in parentSubnetwork[subnet]:
+        for item in parentSubnetworks[subnet]:
             newGene = ""
-            # print(bins)
+            newGene2 = ""
             if isinstance(item, list):
                 gene = item[0]
                 gene2 = item[1]
                 # print(f"gene: {gene} | gene2: {gene2}")
 
-                # gene = first element in the sublist of the subnetwork
-                # for each bin in the bins object
-                """for bin in bins:
-                    if gene in bins[bin]:
-                        if gene in nonfaGenes.keys():
-                            newRandomSubnetList.append(gene)
-                            print(
-                                f"Gene from parent: {gene} | bin: {bins}|{bins[bin]}\n"
-                            )
-                            # print(newRandomSubnetList)
+                geneBin = find_bin(gene, bins)
+                geneBin2 = find_bin(gene2, bins)
+                newGene = geneBin[random.randrange(0, len(geneBin))]
+                newGene2 = geneBin2[random.randrange(0, len(geneBin2))]
 
-                        # print(bins[bin][random.randrange(0, len(bins[bin]))])
-                        newGene = bins[bin][random.randrange(0, len(bins[bin]))]
-                        if newGene in nonfaGenes.keys():
-                            newRandomSubnetList.append(newGene)"""
-                # print(gene + " " + newGene)
-            else:
-                gene = item
+                if newGene in nonfaGenes:
+                    newRandomSubnetList.append(newGene)
+
+                if newGene2 in nonfaGenes:
+                    newRandomSubnetList.append(newGene2)
+
+            elif isinstance(item, str):
+                geneBin = find_bin(item, bins)
+
+                if len(geneBin) == 0:
+                    geneBin = [item]
+
+                newGene = geneBin[random.randrange(0, len(geneBin))]
+
+                if newGene in nonfaGenes:
+                    newRandomSubnetList.append(newGene)
+
+        newSubnetwork.update({keyForNewDictionary: [newRandomSubnetList]})
+
+        keyForNewDictionary += 1
+
+    with open("stage2_random_subnetworks.json", "w") as outputFile:
+        json.dump(newSubnetwork, outputFile)
 
 
 def main():
@@ -58,16 +80,23 @@ def main():
             se.add(j)
     print(len(se))"""
 
-    bins = Bins("STRING 1.txt")
-    faGenes = FaGenes("STRING 1.txt")
-    nonfaGenes = NonFaGenes("STRING 1.txt", faGenes=faGenes)
+    binsInstance = Bins("STRING 1.txt")
+    bins = binsInstance.create_bins()
 
-    parentSubnetwork = Stage1_SubNetworks("results.txt", "Input.gmt.txt")
-    print("main")
+    faGenesInstance = FaGenes("STRING 1.txt")
+    faGenes = faGenesInstance.fanconi_anemia_genes()
 
-    create_secondary_subnetwork(
-        parentSubnetwork=parentSubnetwork, nonfaGenes=nonfaGenes, bins=bins
+    nonfaGenesInstance = NonFaGenes("STRING 1.txt", faGenes=faGenes)
+    nonfaGenes = nonfaGenesInstance.extract_nonfa_genes()
+
+    parentSubnetworksInstance = Stage1_SubNetworks(
+        "results.txt", "Input.gmt.txt", "STRING 1.txt"
     )
+    parentSubnetworks = parentSubnetworksInstance.create_random_subnetworks()
+
+    """create_secondary_subnetwork(
+        parentSubnetworks=parentSubnetworks, nonfaGenes=nonfaGenes, bins=bins
+    )"""
 
 
 if __name__ == "__main__":

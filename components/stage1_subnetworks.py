@@ -104,8 +104,21 @@ class Stage1_SubNetworks:
             for gene in item:
                 if isinstance(gene, list):
                     edgeCount += 1
-            finalDictionary.update({index: {edgeCount: item}})
+            finalDictionary[index] = {"edgeCount": edgeCount, "subnet": item}
+        sortedDictionary = dict(
+            sorted(finalDictionary.items(), key=lambda x: x[1]["edgeCount"])
+        )
+
+        sortedDictionary = dict(
+            sorted(finalDictionary.items(), key=lambda x: x[1]["edgeCount"])
+        )
+        temp = 0
+        for index, item in sortedDictionary.items():
+            if item["edgeCount"] == 0:
+                temp += 1
+        print(temp)
+
         with open("stage1_random_subnetworks.json", "w") as outputFile:
-            json.dump(finalDictionary, outputFile)
+            json.dump(sortedDictionary, outputFile)
         print("First 5,000 subnetworks created")
         return finalDictionary
