@@ -8,9 +8,6 @@ from components.stage1_subnetworks import Stage1_SubNetworks
 
 def create_secondary_subnetwork(stage1_random_subnetworksInstance):
     print("Creating stage 2 random subnetworks")
-    stage2_randomSubnetworks = (
-        stage1_random_subnetworksInstance.create_random_subnetworks()
-    )
 
     with open("stage2_random_subnetworks.json", "w") as outputFile:
         json.dump(stage2_randomSubnetworks, outputFile)
@@ -46,10 +43,7 @@ def main():
         "results.txt", "Input.gmt.txt", "STRING 1.txt"
     )
     stage1_subnetworks = stage1_subnetworksInstance.create_random_subnetworks()
-    stage2_subnetworks = create_secondary_subnetwork(stage1_subnetworksInstance)
-
-    # print(edgeCount1)
-    # print(edgeCount2)
+    # stage2_subnetworks = create_secondary_subnetwork(stage1_subnetworksInstance)
 
 
 if __name__ == "__main__":

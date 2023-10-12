@@ -154,5 +154,5 @@ class Stage1_SubNetworks:
 
         self.sortedDictionary = sortedDictionary
         edgeCount = self.count_edges()
-        print(edgeCount)
+
         return finalDictionary, edgeCount
