@@ -9,9 +9,10 @@ class Stage1_SubNetworks:
         self.stringInputFile = stringInputFile
         self.module1FASubnetwork = []
         self.faGenes = []
+        self.sortedDictionary = {}
 
     def create_loci(self, faInputFile):
-        faGenes = dict()
+        faGenes = {}
         with open(self.faInputFile) as file:
             listFaGenes = [row.split("\t") for row in file]
 
@@ -47,6 +48,47 @@ class Stage1_SubNetworks:
                 module1FASubnetwork.append(row)
         return module1FASubnetwork
 
+    def count_edges(self):
+        sorted_dict = self.sortedDictionary
+        edgeCountDict = {}
+        totalEdgeCount = 0
+        one = 0
+        two = 0
+        three = 0
+        four = 0
+        five = 0
+        zero = 0
+        six = 0
+        for index, item in sorted_dict.items():
+            if item["edgeCount"] == 0:
+                zero += 1
+            elif item["edgeCount"] == 1:
+                one += 1
+            elif item["edgeCount"] == 2:
+                two += 1
+            elif item["edgeCount"] == 3:
+                three += 1
+            elif item["edgeCount"] == 4:
+                four += 1
+            elif item["edgeCount"] == 5:
+                five += 1
+            elif item["edgeCount"] == 6:
+                six += 1
+        edgeCountDict["zero"] = zero
+        edgeCountDict["one"] = one
+        edgeCountDict["two"] = two
+        edgeCountDict["three"] = three
+        edgeCountDict["four"] = four
+        edgeCountDict["five"] = five
+        edgeCountDict["six"] = six
+
+        for item in sorted_dict.items():
+            totalEdgeCount += item["edgeCount"]
+
+        edgeCountDict["totalEdgeCount"] = totalEdgeCount
+
+        return edgeCountDict
+
     def create_individual_subnetwork(self, module1FASubnetwork):
         subnetworkToWrite = []
         flattenedSubnetwork = []
@@ -73,30 +115,23 @@ class Stage1_SubNetworks:
             for index, sublist in enumerate(subnetworkToWrite)
             if sublist not in subnetworkToWrite[:index]
         ]
-
-        """with open(self.stringInputFile, "r") as file:
-            parentNetwork = [row.split("\t") for row in file]
-
-        for gene in flattenedSubnetwork:
-            print(gene)
-"""
         return subnetworkToWrite
 
     def create_random_subnetworks(self):
-        print("Creating first round of subnetworks...")
+        print("Creating stage 1 random subnetworks...")
         module1FASubnetwork = self.extract_fa_genes()
 
         finalList = []
         finalDictionary = {}
-        i = 0
 
-        while i < 5000:
+        count = 0
+        while count < 5000:
             individualSubnetwork = []
             individualSubnetwork = self.create_individual_subnetwork(
                 module1FASubnetwork
             )
             finalList.append(individualSubnetwork)
-            i += 1
+            count += 1
 
         for index, item in enumerate(finalList):
             index = str(index)
@@ -112,13 +147,12 @@ class Stage1_SubNetworks:
         sortedDictionary = dict(
             sorted(finalDictionary.items(), key=lambda x: x[1]["edgeCount"])
         )
-        temp = 0
-        for index, item in sortedDictionary.items():
-            if item["edgeCount"] == 0:
-                temp += 1
-        print(temp)
 
         with open("stage1_random_subnetworks.json", "w") as outputFile:
             json.dump(sortedDictionary, outputFile)
         print("First 5,000 subnetworks created")
-        return finalDictionary
+
+        self.sortedDictionary = sortedDictionary
+        edgeCount = self.count_edges()
+        print(edgeCount)
+        return finalDictionary, edgeCount

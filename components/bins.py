@@ -6,6 +6,7 @@ class Bins:
         self.inputFile = inputFile
 
     def create_bins(self):
+        print("Creating bins...")
         countPerGene = {}
         bins = {}
         with open(self.inputFile, "r") as file:
@@ -29,5 +30,5 @@ class Bins:
 
         with open("bins.json", "w") as outputFile:
             json.dump(bins, outputFile)
-
+        print("Bins created")
         return bins

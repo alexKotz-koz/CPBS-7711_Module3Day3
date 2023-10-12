@@ -7,11 +7,12 @@ class NonFaGenes:
         self.faGenes = faGenes
 
     def extract_nonfa_genes(self):
+        print("Creating non-FA genes...")
         nonfaGenesSet = set()
         nonfaGenes = {}
         faGenes = set(self.faGenes)
 
-        with open(inputFile, "r") as file:
+        with open(self.inputFile, "r") as file:
             parentNetwork = [row.split("\t") for row in file]
 
         for row in parentNetwork:
@@ -23,5 +24,5 @@ class NonFaGenes:
                 if row[1] not in nonfaGenes:
                     nonfaGenes[row[1]] = 0
                 nonfaGenes[row[1]] += 1
-
+        print("Non-FA genes created")
         return nonfaGenes
