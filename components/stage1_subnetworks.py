@@ -82,7 +82,7 @@ class Stage1_SubNetworks:
         edgeCountDict["five"] = five
         edgeCountDict["six"] = six
 
-        for item in sorted_dict.items():
+        for index, item in sorted_dict.items():
             totalEdgeCount += item["edgeCount"]
 
         edgeCountDict["totalEdgeCount"] = totalEdgeCount
@@ -92,15 +92,14 @@ class Stage1_SubNetworks:
     def create_individual_subnetwork(self, module1FASubnetwork):
         subnetworkToWrite = []
         flattenedSubnetwork = []
-        parentNetwork = []
         geneSet12 = self.generate_12_genes()
 
         for gene in geneSet12:
             for row in module1FASubnetwork:
                 if gene == row[0] and row[1] in geneSet12:
-                    subnetworkToWrite.append(row)
+                    subnetworkToWrite.append(row[:2])
                 elif gene == row[1] and row[0] in geneSet12:
-                    subnetworkToWrite.append(row)
+                    subnetworkToWrite.append(row[:2])
 
         for item in subnetworkToWrite:
             for gene in item:
@@ -115,6 +114,7 @@ class Stage1_SubNetworks:
             for index, sublist in enumerate(subnetworkToWrite)
             if sublist not in subnetworkToWrite[:index]
         ]
+
         return subnetworkToWrite
 
     def create_random_subnetworks(self):

@@ -1,0 +1,3 @@
+[tool.black]
+line-length = 88
+multi-line-output = 1
