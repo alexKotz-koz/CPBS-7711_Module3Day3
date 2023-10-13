@@ -2,14 +2,15 @@ import json
 
 
 class Bins:
-    def __init__(self, stringInputFile, faInputFile, faGenes, nonfaGenes):
+    def __init__(self, stringInputFile, m1d3InputFile, faGenes, nonfaGenes):
         self.stringInputFile = stringInputFile
-        self.faInputFile = faInputFile
+        self.m1d3InputFile = m1d3InputFile
         self.faGenes = faGenes
         self.nonfaGenes = nonfaGenes
 
     def create_bins(self):
         print("Creating bins...")
+        # countPerGene = {GeneName:EdgeCount}
         countPerGene = {}
         nonfaBin = {}
         faBin = {}
@@ -36,21 +37,22 @@ class Bins:
         ##REFACTOR lines 24-48
 
         # bin all genes from master network (STRING 1.txt)
+        # ASSUMPTION: all genes from STRING 1.txt have at least one (node-node) connection
         for row in uniqueResults:
             if row[0] not in countPerGene:
-                countPerGene[row[0]] = 0
+                countPerGene[row[0]] = 1
             elif row[0] in countPerGene:
                 countPerGene[row[0]] += 1
 
             if row[1] not in countPerGene:
-                countPerGene[row[1]] = 0
+                countPerGene[row[1]] = 1
             elif row[1] in countPerGene:
                 countPerGene[row[1]] += 1
 
         seen2 = {}
         uniqueResults2 = []
         # bin all genes from module 1 subnetwork (to include all faGenes in bins object)
-        with open(self.faInputFile, "r") as file:
+        with open(self.m1d3InputFile, "r") as file:
             results2 = [row.split("\t")[:2] for row in file]
             results2 = set(tuple(row) for row in results2)
             for row in results2:
@@ -60,24 +62,25 @@ class Bins:
                     seen[(gene2, gene1)] = True
                     uniqueResults2.append(tuple(row))
 
+        # ASSUMPTION: all genes from module 1 subnetwork have at least one (node-node) connection
         for row in uniqueResults2:
             if row[0] not in countPerGene:
-                countPerGene[row[0]] = 0
+                countPerGene[row[0]] = 1
             elif row[0] in countPerGene:
                 countPerGene[row[0]] += 1
 
             if row[1] not in countPerGene:
-                countPerGene[row[1]] = 0
+                countPerGene[row[1]] = 1
             elif row[1] in countPerGene:
                 countPerGene[row[1]] += 1
 
-        # print(len(self.nonfaGenes))
-        # print(len(self.faGenes))
-        # print(self.nonfaGenes)
+        for gene in self.faGenes:
+            if gene not in countPerGene.keys():
+                countPerGene[gene] = 0
+
+        # create nonfaBin, based on the larger bin object
         for item in countPerGene:
             if item in self.nonfaGenes:
-                if item == "OMP":
-                    print(f"item{countPerGene[item]}")
                 nonfaBin[item] = countPerGene[item]
 
         sortedNonFaDict = dict(sorted(nonfaBin.items(), key=lambda item: item[1]))
