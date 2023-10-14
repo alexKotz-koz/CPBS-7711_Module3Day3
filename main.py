@@ -18,9 +18,9 @@ def find_bin(gene, bins):
     return binToReturn, edgeCount
 
 
-def count_edges(subnetwork, parentNetwork):
+def count_edges(subnetwork, stringNetwork):
     edgeCount = 0
-    for row in parentNetwork:
+    for row in stringNetwork:
         if row[0] in subnetwork:
             if row[1] in subnetwork:
                 edgeCount += 1
@@ -30,19 +30,13 @@ def count_edges(subnetwork, parentNetwork):
     return edgeCount
 
 
-"""def find_new_nonFA_gene(countFaNodeFlag, bins):
-    for bin in bins:
-        if any(
-            "geneType" in geneDict and geneDict["geneType"] == "nonfaGene"
-            for geneDict in bins[bin]
-        ):
-            print(bins[bin])"""
-
-
-def create_individual_nonfa_subnetwork(stage1Subnetwork, parentNetwork, bins):
+def create_individual_nonfa_subnetwork(stage1Subnetwork, nonfaBin, bins):
     tempFlattendSubnetwork = set()
-    newGeneSet = []
-    newGeneSetToWrite = []
+    subnet = set()
+    newNonFaGeneBin = {}
+    binNotFoundFlag = False
+    faGeneBinFlag = False
+    faGeneBin = bins[0]
 
     for gene in stage1Subnetwork["subnet"]:
         if isinstance(gene, list):
@@ -50,86 +44,43 @@ def create_individual_nonfa_subnetwork(stage1Subnetwork, parentNetwork, bins):
                 tempFlattendSubnetwork.add(subGene)
         else:
             tempFlattendSubnetwork.add(gene)
-
-    # print("Finding bins...")
+    print("Finding bins...")
 
     for gene in tempFlattendSubnetwork:
-        tempNonFaGenes = []
-        for bin in bins:
-            # HOW LONG is ^ Running for
-            binNumber = bin
-            binObject = bins[bin]
-            binGenes = [list(key.keys())[0] for key in bins[bin]]
-            if gene in binGenes:
-                for index, geneDict in enumerate(binObject):
-                    geneKey = list(geneDict.keys())[0]
-                    if geneDict[geneKey]["geneType"] == "nonfaGene":
-                        tempNonFaGenes.append(geneKey)
-        if len(tempNonFaGenes) == 0:
-            newGeneSet.append("faNodeFlag")
-            # print("single fa node in stage 1 subnetwork")
+        geneBin, binEdgeCount = find_bin(gene, bins)
+
+        # if the gene from tempFlattendSubnetwork lives in a bin with no nonfa genes, a random nonfa gene is used in place, not from the same bin. add flag to this subnetwork
+        if binEdgeCount == 0:
+            faGeneBinFlag = True
+
+        if binEdgeCount == "":
+            print("Bin Edge Count null")
+            binNotFoundFlag = True
             continue
-        newGeneNum = random.randrange(0, len(tempNonFaGenes))
-        newGeneSet.append(tempNonFaGenes[newGeneNum])
 
-    """newGeneSet = [
-        "PLIN3",
-        "PEX11G",
-        "faNodeFlag",
-        "E2F5",
-        "RNF128",
-        "STON2",
-        "PRKD1",
-        "CDK17",
-        "DAZ2",
-        "TMSB15B",
-        "PARL",
-        "MMP19",
-    ]"""
+        if binEdgeCount not in nonfaBin:
+            print("here")
 
-    # add connections if exist
-    for row in parentNetwork:
-        if row[0] in newGeneSet:
-            if row[1] in newGeneSet:
-                newGeneSetToWrite.append(row)
-        elif row[1] in newGeneSet:
-            if row[0] in newGeneSet:
-                newGeneSetToWrite.append(row)
-    # print(newGeneSetToWrite)
-    # sort and unduplicate newGeneSetToWrite
-    newGeneSetToWrite = sorted(newGeneSetToWrite, key=lambda x: x[0], reverse=True)
-    newGeneSetToWrite = list(
-        set(tuple(sorted(subList)) for subList in newGeneSetToWrite)
-    )
-    newGeneSetToWrite = [list(subList) for subList in newGeneSetToWrite]
+        if binEdgeCount in nonfaBin:
+            nonfaBinGenes = nonfaBin[binEdgeCount]
+            newGene = random.choice(nonfaBinGenes)
+            newNonFaGeneBin[gene] = newGene
+            subnet.add(newGene)
 
-    # flatten newGeneSetToWrite and add the connected list(if exists) and the reset of the genes fron newGeneSet
-    flattendNewGeneSetToWrite = []
-    for row in newGeneSetToWrite:
-        if row[0] not in flattendNewGeneSetToWrite:
-            flattendNewGeneSetToWrite.append(row[0])
-        if row[1] not in flattendNewGeneSetToWrite:
-            flattendNewGeneSetToWrite.append(row[1])
-    for row in newGeneSet:
-        if row not in flattendNewGeneSetToWrite:
-            newGeneSetToWrite.append(row)
-    # print(newGeneSetToWrite)
-    print(newGeneSetToWrite)
-
-    return newGeneSetToWrite
-
-    ### WORK-AROUND FOR CASE WHEN GENE IN SUBNET IS IN FA ONLY BIN
-    # find faNodeFlag, replace with (a nonfa gene from a random bin)
-
-    """countFaNodeFlag = 0
-    for gene in newGeneSetToWrite:
-        if gene == "faNodeFlag":
-            countFaNodeFlag += 1
-    find_new_nonFA_gene(countFaNodeFlag, bins)"""
+    return list(subnet), binNotFoundFlag, faGeneBinFlag
 
 
-def create_secondary_subnetwork(parentNetworkFile, stage1Subnetworks, bins, faGenes):
-    # print("Creating stage 2 random subnetworks")
+"""
+        # Double check before creating nonfa subnetwork
+    for i in subnet:
+        if i in faGenes:
+            print(i)"""
+
+
+def create_secondary_subnetwork(
+    parentNetworkFile, stage1Subnetworks, nonfaBin, bins, faGenes
+):
+    print("Creating stage 2 random subnetworks")
 
     stage2Subnetwork = {}
     # nonfaGenes = set(nonfaGenes.keys())
@@ -143,15 +94,22 @@ def create_secondary_subnetwork(parentNetworkFile, stage1Subnetworks, bins, faGe
 
         # flatten stage 1 subnetwork (some subnetworks contain sublists, representing an existing connection between two genes)
 
-        subnet = create_individual_nonfa_subnetwork(subnet, parentNetwork, bins)
+        subnet, binNotFoundFlag, faGeneBinFlag = create_individual_nonfa_subnetwork(
+            subnet, nonfaBin, bins
+        )
         subnetEdgeCount = count_edges(subnet, parentNetwork)
 
-        stage2Subnetwork[index] = {"edgeCount": subnetEdgeCount, "subnet": subnet}
+        stage2Subnetwork[index] = {
+            "edgeCount": subnetEdgeCount,
+            "subnet": subnet,
+            "faGeneBinFlag": faGeneBinFlag,
+            "binNotFoundFlag": binNotFoundFlag,
+        }
         # subnet.append(newGene)
 
     with open("stage2_random_subnetworks.json", "w") as outputFile:
         json.dump(stage2Subnetwork, outputFile)
-    # print("Second 5,000 subnetworks created")
+    print("Second 5,000 subnetworks created")
 
 
 def t_test(stage1Subnetworks, stage2Subnetworks):
@@ -177,7 +135,7 @@ def main():
     nonfaGenes = nonfaGenesInstance.extract_nonfa_genes()
 
     binsInstance = Bins("STRING 1.txt", "results.txt", faGenes, nonfaGenes)
-    bins = binsInstance.create_bins()
+    bins, nonfaBins = binsInstance.create_bins()
 
     stage1_subnetworksInstance = Stage1_SubNetworks(
         "results.txt", "Input.gmt.txt", "STRING 1.txt"
@@ -188,8 +146,9 @@ def main():
         edgeCount,
     ) = stage1_subnetworksInstance.create_random_subnetworks()
     stage2_subnetworks = create_secondary_subnetwork(
-        "STRING 1.txt", stage1Subnetworks, bins, faGenes
+        "STRING 1.txt", stage1Subnetworks, nonfaBins, bins, faGenes
     )
+    # print(edgeCount)
 
 
 if __name__ == "__main__":

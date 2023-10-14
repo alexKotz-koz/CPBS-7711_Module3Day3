@@ -14,7 +14,6 @@ class Bins:
         countPerGene = {}
         nonfaBin = {}
         faBin = {}
-        tempBins = {}
         bins = {}
         nfabins = {}
         seen = {}
@@ -74,51 +73,33 @@ class Bins:
                 countPerGene[row[1]] = 1
             elif row[1] in countPerGene:
                 countPerGene[row[1]] += 1
-        for item in countPerGene:
-            tempBins[item] = {"edgeCount": countPerGene[item], "geneType": ""}
 
-        for item in tempBins:
-            edgeCount = tempBins[item]["edgeCount"]
-            if item in self.faGenes:
-                tempBins[item] = {
-                    "edgeCount": edgeCount,
-                    "geneType": "faGene",
-                }
-            elif item in self.nonfaGenes.keys():
-                tempBins[item] = {
-                    "edgeCount": edgeCount,
-                    "geneType": "nonfaGene",
-                }
         for gene in self.faGenes:
-            if gene not in tempBins.keys():
-                tempBins[gene] = {"edgeCount": 0, "geneType": "faGene"}
+            if gene not in countPerGene.keys():
+                countPerGene[gene] = 0
 
         # create nonfaBin, based on the larger bin object
-        """for item in countPerGene:
+        for item in countPerGene:
             if item in self.nonfaGenes:
-                nonfaBin[item] = countPerGene[item]"""
+                nonfaBin[item] = countPerGene[item]
 
-        # sortedNonFaDict = dict(sorted(nonfaBin.items(), key=lambda item: item[1]))
+        sortedNonFaDict = dict(sorted(nonfaBin.items(), key=lambda item: item[1]))
 
-        sortedDict = dict(
-            sorted(tempBins.items(), key=lambda item: item[1]["edgeCount"])
-        )
+        sortedDict = dict(sorted(countPerGene.items(), key=lambda item: item[1]))
 
-        """for item in sortedNonFaDict:
-            nfabins.setdefault(sortedNonFaDict[item], []).append(item)"""
+        for item in sortedNonFaDict:
+            nfabins.setdefault(sortedNonFaDict[item], []).append(item)
 
         for item in sortedDict:
-            edgeCount = sortedDict[item]["edgeCount"]
-            bins.setdefault(edgeCount, []).append({item: sortedDict[item]})
+            bins.setdefault(sortedDict[item], []).append(item)
 
         """print(len(bins))
         print(len(nfabins))"""
 
-        """with open("nfabins.json", "w") as outputFile:
-            json.dump(nfabins, outputFile)"""
+        with open("nfabins.json", "w") as outputFile:
+            json.dump(nfabins, outputFile)
 
         with open("bins.json", "w") as outputFile:
             json.dump(bins, outputFile)
         print("Bins created")
-        return bins
-        # , nfabins
+        return bins, nfabins
