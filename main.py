@@ -2,73 +2,17 @@ import random
 import json
 from math import sqrt
 import numpy as np
+import threading
+import multiprocessing
 from components.bins import Bins
 from components.fagenes import FaGenes
 from components.nonfagenes import NonFaGenes
 from components.stage1_subnetworks import Stage1_SubNetworks
+from components.create_individual_nonfa_subnetwork_thread import (
+    Create_Individual_Nonfa_Subnetwork_Thread,
+)
 from scipy.stats import permutation_test
 from scipy.stats import norm
-
-
-def find_bin(gene, bins):
-    binToReturn = {}
-    edgeCount = ""
-    for bin in bins:
-        if gene in bins[bin]:
-            binToReturn[bin] = bins[bin]
-            edgeCount = bin
-            break
-    # print(f"findbin | ogGene: {gene} binToReturn:{binToReturn} edgeCount: {edgeCount}")
-    return binToReturn, edgeCount
-
-
-def count_edges(subnetwork, stringNetwork):
-    edgeCount = 0
-    for row in stringNetwork:
-        if row[0] in subnetwork:
-            if row[1] in subnetwork:
-                edgeCount += 1
-        elif row[1] in subnetwork:
-            if row[0] in subnetwork:
-                edgeCount += 1
-    return edgeCount
-
-
-def create_individual_nonfa_subnetwork(stage1Subnetwork, nonfaBin, bins):
-    tempFlattendSubnetwork = set()
-    subnet = set()
-    newNonFaGeneBin = {}
-    binNotFoundFlag = False
-    faGeneBinFlag = False
-    faGeneBin = bins[0]
-
-    for gene in stage1Subnetwork["subnet"]:
-        if isinstance(gene, list):
-            for subGene in gene:
-                tempFlattendSubnetwork.add(subGene)
-        else:
-            tempFlattendSubnetwork.add(gene)
-    print("Finding bins...")
-
-    for gene in tempFlattendSubnetwork:
-        geneBin, binEdgeCount = find_bin(gene, bins)
-
-        # if the gene from tempFlattendSubnetwork lives in a bin with no nonfa genes, a random nonfa gene is used in place, not from the same bin. add flag to this subnetwork
-        if binEdgeCount == 0:
-            faGeneBinFlag = True
-
-        if binEdgeCount == "":
-            print("Bin Edge Count null")
-            binNotFoundFlag = True
-            continue
-
-        if binEdgeCount in nonfaBin:
-            nonfaBinGenes = nonfaBin[binEdgeCount]
-            newGene = random.choice(nonfaBinGenes)
-            newNonFaGeneBin[gene] = newGene
-            subnet.add(newGene)
-
-    return list(subnet), binNotFoundFlag, faGeneBinFlag
 
 
 def create_secondary_subnetwork(
@@ -85,21 +29,50 @@ def create_secondary_subnetwork(
 
     for index, subnet in stage1Subnetworks.items():
         subnetworksFromStage1 = subnet["subnet"]
-
-        # flatten stage 1 subnetwork (some subnetworks contain sublists, representing an existing connection between two genes)
-
-        subnet, binNotFoundFlag, faGeneBinFlag = create_individual_nonfa_subnetwork(
-            subnet, nonfaBin, bins
+        # Create the thread object
+        thread = Create_Individual_Nonfa_Subnetwork_Thread(
+            subnet, nonfaBin, bins, parentNetwork, subnetworksFromStage1
         )
-        subnetEdgeCount = count_edges(subnet, parentNetwork)
 
-        stage2Subnetwork[index] = {
-            "edgeCount": subnetEdgeCount,
-            "subnet": subnet,
-            "faGeneBinFlag": faGeneBinFlag,
-            "binNotFoundFlag": binNotFoundFlag,
-        }
-        # subnet.append(newGene)
+        # Start the thread
+        thread.start()
+
+        # Wait for the thread to finish and get the result
+        result = thread.join()
+        print(result)
+        # Access the dictionary values
+        edgeCount = result["edgeCount"]
+        subnet = result["subnet"]
+        faGeneBinFlag = result["faGeneBinFlag"]
+        binNotFoundFlag = result["binNotFoundFlag"]
+        print(
+            edgeCount,
+            subnet,
+        )
+    """try:
+        threads = []
+        for index, subnet in stage1Subnetworks.items():
+            subnetworksFromStage1 = subnet["subnet"]
+            # Create Thread instance here
+            create_individual_nonfa_subnetwork_thread_instance = (
+                create_individual_nonfa_subnetwork_thread(
+                    subnet, nonfaBin, bins, parentNetwork, stage1Subnetworks
+                )
+            )
+            t = threading.Thread(
+                target=create_individual_nonfa_subnetwork_thread_instance.run
+            )
+            threads.append(t)
+
+        for thread in threads:
+            thread.start()
+
+        for thread in threads:
+            result = thread.join()
+            stage2Subnetwork[index] = result
+        print(stage2Subnetwork)
+    except Exception as e:
+        print("Error:", e)"""
 
     with open("stage2_random_subnetworks.json", "w") as outputFile:
         json.dump(stage2Subnetwork, outputFile)
@@ -170,9 +143,9 @@ def main():
         stage1Subnetworks,
         edgeCount,
     ) = stage1_subnetworksInstance.create_random_subnetworks()
-    """stage2_subnetworks = create_secondary_subnetwork(
+    stage2_subnetworks = create_secondary_subnetwork(
         "STRING 1.txt", stage1Subnetworks, nonfaBins, bins, faGenes
-    )"""
+    )
 
     pVal = p_test(
         "stage1_random_subnetworks.json", "stage2_random_subnetworks copy.json"
