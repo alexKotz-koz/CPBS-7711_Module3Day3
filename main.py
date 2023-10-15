@@ -15,32 +15,40 @@ from scipy.stats import permutation_test
 from scipy.stats import norm
 
 
+def execute_thread(thread):
+    thread.start()
+    thread.join()
+    return thread.result
+
+
 def create_secondary_subnetwork(
     parentNetworkFile, stage1Subnetworks, nonfaBin, bins, faGenes
 ):
     print("Creating stage 2 random subnetworks")
 
     stage2Subnetwork = {}
-    # nonfaGenes = set(nonfaGenes.keys())
     parentNetwork = []
 
     with open("STRING 1.txt", "r") as file:
         parentNetwork = [row.split("\t")[:2] for row in file]
 
+    threads = []
     for index, subnet in stage1Subnetworks.items():
         subnetworksFromStage1 = subnet["subnet"]
+
+        # print(f"subnetworkFromStage1: {subnetworksFromStage1}")
+
         # Create the thread object
         thread = Create_Individual_Nonfa_Subnetwork_Thread(
             subnet, nonfaBin, bins, parentNetwork, subnetworksFromStage1
         )
+        threads.append(thread)
+    print(len(threads))
 
-        # Start the thread
-        thread.start()
+    thread_batches = [threads[i : i + 1000] for i in range(0, len(threads), 1000)]
 
-        # Wait for the thread to finish and get the result
-        result = thread.join()
-        print(result)
-        # Access the dictionary values
+    for result in results:
+        stage2Subnetwork[index] = result
         edgeCount = result["edgeCount"]
         subnet = result["subnet"]
         faGeneBinFlag = result["faGeneBinFlag"]

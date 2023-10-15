@@ -24,12 +24,12 @@ class Create_Individual_Nonfa_Subnetwork_Thread(threading.Thread):
 
     def count_edges(self, subnetwork):
         edgeCount = 0
-        for row in self.stringNetwork:
-            if row[0] in self.subnetwork:
-                if row[1] in self.subnetwork:
+        for row in self.parentNetwork:
+            if row[0] in subnetwork:
+                if row[1] in subnetwork:
                     edgeCount += 1
-            elif row[1] in self.subnetwork:
-                if row[0] in self.subnetwork:
+            elif row[1] in subnetwork:
+                if row[0] in subnetwork:
                     edgeCount += 1
         return edgeCount
 
@@ -45,7 +45,7 @@ class Create_Individual_Nonfa_Subnetwork_Thread(threading.Thread):
         ##########################################
         print(stage1Subnetwork)
 
-        for gene in stage1Subnetwork["subnet"]:
+        for gene in stage1Subnetwork:
             if isinstance(gene, list):
                 for subGene in gene:
                     tempFlattendSubnetwork.add(subGene)
@@ -81,7 +81,12 @@ class Create_Individual_Nonfa_Subnetwork_Thread(threading.Thread):
         ) = self.create_individual_nonfa_subnetwork(
             self.subnet, self.nonfaBin, self.bins, self.stage1Subnetwork
         )
-        subnetEdgeCount = self.count_edges(subnet, self.parentNetwork)
+        subnetEdgeCount = self.count_edges(subnet)
+
+        # print(f"subnetEdgeCount: {subnetEdgeCount}")
+        # print(f"subnet: {subnet}")
+        # print(f"faGeneBinFlag: {faGeneBinFlag}")
+        # print(f"binNotFoundFlag: {binNotFoundFlag}")
 
         result = {
             "edgeCount": subnetEdgeCount,
@@ -89,5 +94,7 @@ class Create_Individual_Nonfa_Subnetwork_Thread(threading.Thread):
             "faGeneBinFlag": faGeneBinFlag,
             "binNotFoundFlag": binNotFoundFlag,
         }
+
+        # print(f"result from class: {result}")
 
         return result
