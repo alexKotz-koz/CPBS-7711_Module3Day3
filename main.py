@@ -32,9 +32,34 @@ def create_secondary_subnetwork(
     with open(parentNetworkFile, "r") as file:
         parentNetwork = [row.split("\t")[:2] for row in file]
 
-    try:
-        results = []
-        pool = multiprocessing.Pool(len(stage1Subnetworks.items()))
+    threads = []
+    for index, subnet in stage1Subnetworks.items():
+        subnetworksFromStage1 = subnet["subnet"]
+
+        # print(f"subnetworkFromStage1: {subnetworksFromStage1}")
+
+        # Create the thread object
+        thread = Create_Individual_Nonfa_Subnetwork_Thread(
+            subnet, nonfaBin, bins, parentNetwork, subnetworksFromStage1
+        )
+        thread.start()
+        threads.append(thread)
+    print(len(threads))
+
+    results.append(thread.join())
+
+    for result in results:
+        stage2Subnetwork[index] = result
+        edgeCount = result["edgeCount"]
+        subnet = result["subnet"]
+        faGeneBinFlag = result["faGeneBinFlag"]
+        binNotFoundFlag = result["binNotFoundFlag"]
+        print(
+            edgeCount,
+            subnet,
+        )
+    """try:
+        threads = []
         for index, subnet in stage1Subnetworks.items():
             subnetworksFromStage1 = subnet["subnet"]
             print(len(subnetworksFromStage1))
