@@ -91,7 +91,7 @@ w
             binNotFoundFlag = stage2Subnetwork[index]["binNotFoundFlag"]
             print(edgeCount, subnet)
     except Exception as e:
-        print(f"Error:{e}")
+        print(f"Error:{e}")"""
 
     with open("stage2_random_subnetworks.json", "w") as outputFile:
         json.dump(stage2Subnetwork, outputFile)
