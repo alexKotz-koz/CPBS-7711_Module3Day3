@@ -1,6 +1,0 @@
-A	B	1
-B	C	2
-A	C	3
-F	Z	8
-X	Y	9
-G	H	10

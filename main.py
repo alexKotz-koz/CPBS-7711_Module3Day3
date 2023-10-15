@@ -15,10 +15,10 @@ from scipy.stats import permutation_test
 from scipy.stats import norm
 
 
-def execute_thread(thread):
-    thread.start()
-    thread.join()
-    return thread.result
+def create_individual_nonfa_subnetwork(
+    subnet, nonfaBin, bins, parentNetwork, subnetworksFromStage1
+):
+    return result
 
 
 def create_secondary_subnetwork(
@@ -29,58 +29,44 @@ def create_secondary_subnetwork(
     stage2Subnetwork = {}
     parentNetwork = []
 
-    with open("STRING 1.txt", "r") as file:
+    with open(parentNetworkFile, "r") as file:
         parentNetwork = [row.split("\t")[:2] for row in file]
 
-    threads = []
-    for index, subnet in stage1Subnetworks.items():
-        subnetworksFromStage1 = subnet["subnet"]
-
-        # print(f"subnetworkFromStage1: {subnetworksFromStage1}")
-
-        # Create the thread object
-        thread = Create_Individual_Nonfa_Subnetwork_Thread(
-            subnet, nonfaBin, bins, parentNetwork, subnetworksFromStage1
-        )
-        threads.append(thread)
-    print(len(threads))
-
-    thread_batches = [threads[i : i + 1000] for i in range(0, len(threads), 1000)]
-
-    for result in results:
-        stage2Subnetwork[index] = result
-        edgeCount = result["edgeCount"]
-        subnet = result["subnet"]
-        faGeneBinFlag = result["faGeneBinFlag"]
-        binNotFoundFlag = result["binNotFoundFlag"]
-        print(
-            edgeCount,
-            subnet,
-        )
-    """try:
-        threads = []
+    try:
+        results = []
+        pool = multiprocessing.Pool(len(stage1Subnetworks.items()))
         for index, subnet in stage1Subnetworks.items():
             subnetworksFromStage1 = subnet["subnet"]
-            # Create Thread instance here
-            create_individual_nonfa_subnetwork_thread_instance = (
-                create_individual_nonfa_subnetwork_thread(
-                    subnet, nonfaBin, bins, parentNetwork, stage1Subnetworks
-                )
-            )
-            t = threading.Thread(
-                target=create_individual_nonfa_subnetwork_thread_instance.run
-            )
-            threads.append(t)
+            print(len(subnetworksFromStage1))
 
-        for thread in threads:
-            thread.start()
+            # Create an instance of the Create_Individual_Nonfa_Subnetwork_Thread class
+            instance = Create_Individual_Nonfa_Subnetwork_Thread(
+                subnet, nonfaBin, bins, parentNetwork, subnetworksFromStage1
+            )
+            thread = instance.run()
+            # Start the thread
+            result = pool.apply_async(thread)
+            # Append the thread and AsyncResult object to the results list
+            results.append((thread, result))
 
-        for thread in threads:
-            result = thread.join()
-            stage2Subnetwork[index] = result
-        print(stage2Subnetwork)
+        for result in results:
+            result.wait()
+
+        # Close the pool
+        pool.close()
+        pool.join()
+
+        for index, (thread, result) in enumerate(results):
+            # Get the result from the thread object
+            thread.get_result()
+            stage2Subnetwork[index] = thread.result
+            edgeCount = stage2Subnetwork[index]["edgeCount"]
+            subnet = stage2Subnetwork[index]["subnet"]
+            faGeneBinFlag = stage2Subnetwork[index]["faGeneBinFlag"]
+            binNotFoundFlag = stage2Subnetwork[index]["binNotFoundFlag"]
+            print(edgeCount, subnet)
     except Exception as e:
-        print("Error:", e)"""
+        print(f"Error:{e}")
 
     with open("stage2_random_subnetworks.json", "w") as outputFile:
         json.dump(stage2Subnetwork, outputFile)
@@ -151,10 +137,10 @@ def main():
         stage1Subnetworks,
         edgeCount,
     ) = stage1_subnetworksInstance.create_random_subnetworks()
-    stage2_subnetworks = create_secondary_subnetwork(
+    """stage2_subnetworks = create_secondary_subnetwork(
         "STRING 1.txt", stage1Subnetworks, nonfaBins, bins, faGenes
     )
-
+"""
     pVal = p_test(
         "stage1_random_subnetworks.json", "stage2_random_subnetworks copy.json"
     )

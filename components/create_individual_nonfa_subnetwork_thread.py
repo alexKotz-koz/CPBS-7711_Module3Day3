@@ -1,5 +1,6 @@
 import threading
 import random
+import multiprocessing
 
 
 class Create_Individual_Nonfa_Subnetwork_Thread(threading.Thread):
@@ -10,6 +11,9 @@ class Create_Individual_Nonfa_Subnetwork_Thread(threading.Thread):
         self.bins = bins
         self.parentNetwork = parentNetwork
         self.stage1Subnetwork = stage1Subnetwork
+        self.manager = multiprocessing.Manager()
+        self.queue = self.manager.Queue()
+        self.result = None
 
     def find_bin(self, gene, bins):
         binToReturn = {}
@@ -81,6 +85,7 @@ class Create_Individual_Nonfa_Subnetwork_Thread(threading.Thread):
         ) = self.create_individual_nonfa_subnetwork(
             self.subnet, self.nonfaBin, self.bins, self.stage1Subnetwork
         )
+        print("run called")
         subnetEdgeCount = self.count_edges(subnet)
 
         # print(f"subnetEdgeCount: {subnetEdgeCount}")
@@ -97,4 +102,8 @@ class Create_Individual_Nonfa_Subnetwork_Thread(threading.Thread):
 
         # print(f"result from class: {result}")
 
-        return result
+        self.queue.put(result)
+
+    def get_result(self):
+        self.result = self.queue.get()
+        return self.result
