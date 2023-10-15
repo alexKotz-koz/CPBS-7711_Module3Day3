@@ -15,10 +15,26 @@ from scipy.stats import permutation_test
 from scipy.stats import norm
 
 
-def create_individual_nonfa_subnetwork(
-    subnet, nonfaBin, bins, parentNetwork, subnetworksFromStage1
-):
-    return result
+def create_thread(subnet, nonfaBin, bins, parentNetwork):
+    subnetworksFromStage1 = subnet["subnet"]
+    # Create the thread object
+    thread = Create_Individual_Nonfa_Subnetwork_Thread(
+        subnet, nonfaBin, bins, parentNetwork, subnetworksFromStage1
+    )
+    # Return the thread object
+    return thread
+
+
+def execute_batch(batch):
+    results = []
+    print(batch)
+    for thread in batch:
+        print("executing thread")
+        thread.start()
+        thread.join()
+        result = thread.get_result()
+        results.append(result)
+    return results
 
 
 def create_secondary_subnetwork(
@@ -31,67 +47,37 @@ def create_secondary_subnetwork(
 
     with open(parentNetworkFile, "r") as file:
         parentNetwork = [row.split("\t")[:2] for row in file]
+    #      Split the stage1Subnetworks dictionary into 5 groups
+    subnetwork_groups = [
+        dict(list(stage1Subnetworks.items())[i : i + 5])
+        for i in range(0, len(stage1Subnetworks), 5)
+    ]
 
-    threads = []
-    for index, subnet in stage1Subnetworks.items():
-        subnetworksFromStage1 = subnet["subnet"]
+    # Create a pool of processes
+    num_processes = 5
+    pool = multiprocessing.Pool(num_processes)
 
-        # print(f"subnetworkFromStage1: {subnetworksFromStage1}")
+    # Submit each group of subnetworks to the pool
+    for subnetwork_group in subnetwork_groups:
+        results = []
+        for subnet in subnetwork_group.values():
+            # Create a new thread for each subnetwork
+            thread = create_thread(subnet, nonfaBin, bins, parentNetwork)
+            results.append(thread)
+        # Execute the batch of threads
+        batch_results = execute_batch(results)
+        # Store the results in the stage2Subnetwork dictionary
+        for index, batch_result in enumerate(batch_results):
+            stage2Subnetwork[index] = batch_result
+            edgeCount = batch_result["edgeCount"]
+            subnet = batch_result["subnet"]
+            faGeneBinFlag = batch_result["faGeneBinFlag"]
+            binNotFoundFlag = batch_result["binNotFoundFlag"]
+            print(edgeCount, subnet, faGeneBinFlag, binNotFoundFlag)
 
-        # Create the thread object
-        thread = Create_Individual_Nonfa_Subnetwork_Thread(
-            subnet, nonfaBin, bins, parentNetwork, subnetworksFromStage1
-        )
-        thread.start()
-        threads.append(thread)
-    print(len(threads))
-
-    results.append(thread.join())
-
-    for result in results:
-        stage2Subnetwork[index] = result
-        edgeCount = result["edgeCount"]
-        subnet = result["subnet"]
-        faGeneBinFlag = result["faGeneBinFlag"]
-        binNotFoundFlag = result["binNotFoundFlag"]
-        print(
-            edgeCount,
-            subnet,
-        )
-    """try:
-        threads = []
-        for index, subnet in stage1Subnetworks.items():
-            subnetworksFromStage1 = subnet["subnet"]
-            print(len(subnetworksFromStage1))
-
-            # Create an instance of the Create_Individual_Nonfa_Subnetwork_Thread class
-            instance = Create_Individual_Nonfa_Subnetwork_Thread(
-                subnet, nonfaBin, bins, parentNetwork, subnetworksFromStage1
-            )
-            thread = instance.run()
-            # Start the thread
-            result = pool.apply_async(thread)
-            # Append the thread and AsyncResult object to the results list
-            results.append((thread, result))
-
-        for result in results:
-            result.wait()
-
-        # Close the pool
-        pool.close()
-        pool.join()
-w
-        for index, (thread, result) in enumerate(results):
-            # Get the result from the thread object
-            thread.get_result()
-            stage2Subnetwork[index] = thread.result
-            edgeCount = stage2Subnetwork[index]["edgeCount"]
-            subnet = stage2Subnetwork[index]["subnet"]
-            faGeneBinFlag = stage2Subnetwork[index]["faGeneBinFlag"]
-            binNotFoundFlag = stage2Subnetwork[index]["binNotFoundFlag"]
-            print(edgeCount, subnet)
-    except Exception as e:
-        print(f"Error:{e}")"""
+    # Close the pool
+    pool.close()
+    pool.join()
 
     with open("stage2_random_subnetworks.json", "w") as outputFile:
         json.dump(stage2Subnetwork, outputFile)

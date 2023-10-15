@@ -13,7 +13,7 @@ class Create_Individual_Nonfa_Subnetwork_Thread(threading.Thread):
         self.stage1Subnetwork = stage1Subnetwork
         self.manager = multiprocessing.Manager()
         self.queue = self.manager.Queue()
-        self.result = None
+        self.result = {}
 
     def find_bin(self, gene, bins):
         binToReturn = {}
