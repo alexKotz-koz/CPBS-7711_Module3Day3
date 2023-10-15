@@ -42,10 +42,11 @@ def create_secondary_subnetwork(
         thread = Create_Individual_Nonfa_Subnetwork_Thread(
             subnet, nonfaBin, bins, parentNetwork, subnetworksFromStage1
         )
+        thread.start()
         threads.append(thread)
     print(len(threads))
 
-    thread_batches = [threads[i : i + 1000] for i in range(0, len(threads), 1000)]
+    results.append(thread.join())
 
     for result in results:
         stage2Subnetwork[index] = result

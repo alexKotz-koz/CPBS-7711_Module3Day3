@@ -43,7 +43,7 @@ class Create_Individual_Nonfa_Subnetwork_Thread(threading.Thread):
         faGeneBinFlag = False
         faGeneBin = bins[0]
         ##########################################
-        print(stage1Subnetwork)
+        # print(stage1Subnetwork)
 
         for gene in stage1Subnetwork:
             if isinstance(gene, list):
