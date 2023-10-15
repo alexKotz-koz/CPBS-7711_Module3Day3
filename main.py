@@ -55,7 +55,7 @@ def create_secondary_subnetwork(
         # Close the pool
         pool.close()
         pool.join()
-
+w
         for index, (thread, result) in enumerate(results):
             # Get the result from the thread object
             thread.get_result()
@@ -137,10 +137,10 @@ def main():
         stage1Subnetworks,
         edgeCount,
     ) = stage1_subnetworksInstance.create_random_subnetworks()
-    """stage2_subnetworks = create_secondary_subnetwork(
+    stage2_subnetworks = create_secondary_subnetwork(
         "STRING 1.txt", stage1Subnetworks, nonfaBins, bins, faGenes
     )
-"""
+
     pVal = p_test(
         "stage1_random_subnetworks.json", "stage2_random_subnetworks copy.json"
     )
