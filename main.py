@@ -1,9 +1,13 @@
 import random
 import json
+from math import sqrt
+import numpy as np
 from components.bins import Bins
 from components.fagenes import FaGenes
 from components.nonfagenes import NonFaGenes
 from components.stage1_subnetworks import Stage1_SubNetworks
+from scipy.stats import permutation_test
+from scipy.stats import norm
 
 
 def find_bin(gene, bins):
@@ -58,9 +62,6 @@ def create_individual_nonfa_subnetwork(stage1Subnetwork, nonfaBin, bins):
             binNotFoundFlag = True
             continue
 
-        if binEdgeCount not in nonfaBin:
-            print("here")
-
         if binEdgeCount in nonfaBin:
             nonfaBinGenes = nonfaBin[binEdgeCount]
             newGene = random.choice(nonfaBinGenes)
@@ -68,13 +69,6 @@ def create_individual_nonfa_subnetwork(stage1Subnetwork, nonfaBin, bins):
             subnet.add(newGene)
 
     return list(subnet), binNotFoundFlag, faGeneBinFlag
-
-
-"""
-        # Double check before creating nonfa subnetwork
-    for i in subnet:
-        if i in faGenes:
-            print(i)"""
 
 
 def create_secondary_subnetwork(
@@ -112,22 +106,53 @@ def create_secondary_subnetwork(
     print("Second 5,000 subnetworks created")
 
 
-def t_test(stage1Subnetworks, stage2Subnetworks):
-    pValue = 0
+def statistic(x, y, axis):
+    return np.mean(x, axis=axis) - np.mean(y, axis=axis)
 
-    return pValue
+
+def p_test(stage1SubnetworksFile, stage2SubnetworksFile):
+    stage1SubnetworksEdgeCount = []
+    stage2SubnetworksEdgeCount = []
+    alpha = 0.05
+
+    with open(stage1SubnetworksFile, "r") as file:
+        stage1Subnetworks = json.load(file)
+    for bin in stage1Subnetworks:
+        stage1SubnetworksEdgeCount.append(stage1Subnetworks[bin]["edgeCount"])
+    stage1SubnetworksMean = sum(stage1SubnetworksEdgeCount) / 5000
+
+    with open(stage2SubnetworksFile, "r") as file:
+        stage2Subnetworks = json.load(file)
+
+    totalEdgeCount = 0
+    for bin in stage2Subnetworks:
+        binEdgeCount = 0
+        subnet = stage2Subnetworks[bin]["subnet"]
+        for item in subnet:
+            if isinstance(item, list):
+                totalEdgeCount += 1
+                binEdgeCount += 1
+        if binEdgeCount >= 1:
+            stage2SubnetworksEdgeCount.append(binEdgeCount)
+        else:
+            stage2SubnetworksEdgeCount.append(0)
+
+    stage2SubnetworksMean = totalEdgeCount / 5000
+    rng = np.random.default_rng()
+
+    print(f"Seed: {rng}")
+    x = stage1SubnetworksEdgeCount
+    y = stage2SubnetworksEdgeCount
+
+    statistic(x, y, 0)
+
+    res = permutation_test(
+        (x, y), statistic, vectorized=True, n_resamples=9999, alternative="less"
+    )
+    print(f"pval: {res.pvalue}")
 
 
 def main():
-    ##TEST TO SEE HOW MANY ROWS ARE IN NONFAGENES
-    """with open("STRING 1.txt", "r") as file:
-    se = set()
-    results = [row.split("\t")[:2] for row in file]
-    for i in results:
-        for j in i:
-            se.add(j)
-    print(len(se))"""
-
     faGenesInstance = FaGenes("Input.gmt.txt")
     faGenes = faGenesInstance.fanconi_anemia_genes()
 
@@ -145,10 +170,14 @@ def main():
         stage1Subnetworks,
         edgeCount,
     ) = stage1_subnetworksInstance.create_random_subnetworks()
-    stage2_subnetworks = create_secondary_subnetwork(
+    """stage2_subnetworks = create_secondary_subnetwork(
         "STRING 1.txt", stage1Subnetworks, nonfaBins, bins, faGenes
+    )"""
+
+    pVal = p_test(
+        "stage1_random_subnetworks.json", "stage2_random_subnetworks copy.json"
     )
-    # print(edgeCount)
+    print(pVal)
 
 
 if __name__ == "__main__":

@@ -13,3 +13,8 @@
         
         random.randrange(0,len(locus))
 - 
+
+### Permutation Test:
+- [scipy documentation](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.permutation_test.html)
+
+- [concepts](https://towardsdatascience.com/how-to-use-permutation-tests-bacc79f45749)
