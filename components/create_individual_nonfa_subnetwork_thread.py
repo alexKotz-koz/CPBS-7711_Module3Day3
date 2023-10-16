@@ -1,30 +1,32 @@
-import threading
 import random
-import multiprocessing
+from bisect import bisect_left
 
 
-class Create_Individual_Nonfa_Subnetwork_Thread(threading.Thread):
-    def __init__(self, subnet, nonfaBin, bins, parentNetwork, stage1Subnetwork):
-        threading.Thread.__init__(self)
-        self.subnet = subnet
+class Create_Individual_Nonfa_Subnetwork_Thread:
+    def __init__(self, nonfaBin, bins, parentNetwork, stage1Subnetwork):
         self.nonfaBin = nonfaBin
         self.bins = bins
         self.parentNetwork = parentNetwork
         self.stage1Subnetwork = stage1Subnetwork
-        self.manager = multiprocessing.Manager()
-        self.queue = self.manager.Queue()
+
         self.result = {}
 
-    def find_bin(self, gene, bins):
-        binToReturn = {}
-        edgeCount = ""
-        for bin in bins:
-            if gene in bins[bin]:
-                binToReturn[bin] = bins[bin]
-                edgeCount = bin
-                break
-        # print(f"findbin | ogGene: {gene} binToReturn:{binToReturn} edgeCount: {edgeCount}")
-        return binToReturn, edgeCount
+    # Input: stage 1 subnetwork genes and the bins object
+    def find_bins(self, genes, bins):
+        binsToReturn = {}
+        count = 1
+        for gene in genes:
+            for binName, binGenes in bins.items():
+                sortedGenes = sorted(binGenes)
+                index = bisect_left(sortedGenes, gene)
+                if index != len(sortedGenes) and sortedGenes[index] == gene:
+                    count += 1
+                    # binsToReturn.setdefault(binName, []).append(gene)
+                    binsToReturn[gene] = {binName: binGenes}
+                    break
+        print(count)
+        print(len(binsToReturn))
+        return binsToReturn
 
     def count_edges(self, subnetwork):
         edgeCount = 0
@@ -37,43 +39,40 @@ class Create_Individual_Nonfa_Subnetwork_Thread(threading.Thread):
                     edgeCount += 1
         return edgeCount
 
-    def create_individual_nonfa_subnetwork(
-        self, subnet, nonfaBin, bins, stage1Subnetwork
-    ):
+    def create_individual_nonfa_subnetwork(self, nonfaBin, bins, stage1Subnetwork):
         tempFlattendSubnetwork = set()
-        subnet = set()
-        newNonFaGeneBin = {}
+        subnet = []
         binNotFoundFlag = False
         faGeneBinFlag = False
         faGeneBin = bins[0]
-        ##########################################
-        # print(stage1Subnetwork)
 
-        for gene in stage1Subnetwork:
-            if isinstance(gene, list):
-                for subGene in gene:
-                    tempFlattendSubnetwork.add(subGene)
+        tempFlattendSubnetwork = set(
+            gene
+            for sublist in stage1Subnetwork
+            for gene in (sublist if isinstance(sublist, list) else [sublist])
+        )
+
+        # Find the bins for all genes in the tempFlattendSubnetwork list
+        binsToGenes = self.find_bins(tempFlattendSubnetwork, bins)
+
+        for key, val in binsToGenes.items():
+            newGeneList = []
+            for name, genes in val.items():
+                binName = name
+                binGenes = genes
+            # Check if the bin has any nonfa genes
+            if binName in nonfaBin:
+                newGeneList = nonfaBin[binName]
             else:
-                tempFlattendSubnetwork.add(gene)
-        print("Finding bins...")
-
-        for gene in tempFlattendSubnetwork:
-            geneBin, binEdgeCount = self.find_bin(gene, bins)
-
-            # if the gene from tempFlattendSubnetwork lives in a bin with no nonfa genes, a random nonfa gene is used in place, not from the same bin. add flag to this subnetwork
-            if binEdgeCount == 0:
                 faGeneBinFlag = True
+                newGeneList.append("faGene")
 
-            if binEdgeCount == "":
-                print("Bin Edge Count null")
-                binNotFoundFlag = True
-                continue
-
-            if binEdgeCount in nonfaBin:
-                nonfaBinGenes = nonfaBin[binEdgeCount]
-                newGene = random.choice(nonfaBinGenes)
-                newNonFaGeneBin[gene] = newGene
-                subnet.add(newGene)
+            # Choose a random gene from the gene list
+            if newGeneList == "faGene":
+                subnet.add("faGene")
+            else:
+                subnet.append(random.choice(newGeneList))
+        print(f"subnet created: {len(subnet)}")
 
         return list(subnet), binNotFoundFlag, faGeneBinFlag
 
@@ -83,15 +82,10 @@ class Create_Individual_Nonfa_Subnetwork_Thread(threading.Thread):
             binNotFoundFlag,
             faGeneBinFlag,
         ) = self.create_individual_nonfa_subnetwork(
-            self.subnet, self.nonfaBin, self.bins, self.stage1Subnetwork
+            self.nonfaBin, self.bins, self.stage1Subnetwork
         )
-        print("run called")
+        # print("run called")
         subnetEdgeCount = self.count_edges(subnet)
-
-        # print(f"subnetEdgeCount: {subnetEdgeCount}")
-        # print(f"subnet: {subnet}")
-        # print(f"faGeneBinFlag: {faGeneBinFlag}")
-        # print(f"binNotFoundFlag: {binNotFoundFlag}")
 
         result = {
             "edgeCount": subnetEdgeCount,
@@ -101,9 +95,4 @@ class Create_Individual_Nonfa_Subnetwork_Thread(threading.Thread):
         }
 
         # print(f"result from class: {result}")
-
-        self.queue.put(result)
-
-    def get_result(self):
-        self.result = self.queue.get()
-        return self.result
+        return result

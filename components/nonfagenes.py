@@ -6,6 +6,8 @@ class NonFaGenes:
         self.inputFile = inputFile
         self.faGenes = faGenes
 
+    # Input: faGenes object (all FA genes) and the STRING 1.txt file
+    # Output: object containing all nonFA genes
     def extract_nonfa_genes(self):
         print("Creating non-FA genes...")
         nonfaGenesSet = set()
@@ -15,6 +17,7 @@ class NonFaGenes:
         with open(self.inputFile, "r") as file:
             parentNetwork = [row.split("\t") for row in file]
 
+        # iterate over parentNetwork and add genes that do not exist in faGenes object, to nonfaGenes object
         for row in parentNetwork:
             if row[0] not in faGenes:
                 if row[0] not in nonfaGenes:

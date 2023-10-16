@@ -18,23 +18,19 @@ class Bins:
         nfabins = {}
         seen = {}
         uniqueResults = []
+
+        # read in parent network and store in results set
         with open(self.stringInputFile, "r") as file:
             results = [row.split("\t")[:2] for row in file]
             results = set(tuple(row) for row in results)
 
-            # Only add unique rows (a,b) (b,a) -- only add b,a to results
+            # only add unique rows (a,b) (b,a) -- strictly add b,a to results
             for row in results:
                 gene1, gene2 = row
                 if (gene2, gene1) not in seen:
                     seen[row] = True
                     seen[(gene2, gene1)] = True
                     uniqueResults.append(tuple(row))
-
-            """with open("temp.txt", "w") as file:
-                for tup in uniqueResults:
-                    file.write(str(tup) + "\n")"""
-
-        ##REFACTOR lines 24-48
 
         # bin all genes from master network (STRING 1.txt)
         # ASSUMPTION: all genes from STRING 1.txt have at least one (node-node) connection
@@ -87,15 +83,14 @@ class Bins:
 
         sortedDict = dict(sorted(countPerGene.items(), key=lambda item: item[1]))
 
+        # add items sortedNonFaDict and sortedDict to corresponding objects
         for item in sortedNonFaDict:
             nfabins.setdefault(sortedNonFaDict[item], []).append(item)
 
         for item in sortedDict:
             bins.setdefault(sortedDict[item], []).append(item)
 
-        """print(len(bins))
-        print(len(nfabins))"""
-
+        # write the objects to files for use in creation of secondary subnetworks
         with open("nfabins.json", "w") as outputFile:
             json.dump(nfabins, outputFile)
 
