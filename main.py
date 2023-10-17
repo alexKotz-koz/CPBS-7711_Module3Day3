@@ -10,8 +10,6 @@ from components.stage1_subnetworks import Stage1_SubNetworks
 from components.create_individual_nonfa_subnetwork_thread import (
     Create_Individual_Nonfa_Subnetwork_Thread,
 )
-from scipy.stats import permutation_test
-from scipy.stats import norm
 
 # Globally used objects:
 # bins: an object that contains a key value pair for each edge count (calculated from the parentNetwork). key = edge count # : value = list of genes
@@ -46,20 +44,6 @@ def create_secondary_subnetwork(
     with open(parentNetworkFile, "r") as file:
         parentNetwork = [row.split("\t")[:2] for row in file]
 
-    # test for individual subnetwork
-    """for index, subnet in stage1Subnetworks.items():
-        print(f"index{index}")
-
-        instance = Create_Individual_Nonfa_Subnetwork_Thread(
-            nonfaBin, bins, parentNetwork, subnet["subnet"]
-        )
-        result = instance.run()
-        stage2Subnetworks[index] = result
-        print(result)
-    with open("stage2_random_subnetworks.json", "w") as outputFile:
-        json.dump(stage2Subnetworks, outputFile)
-    print("Second 5,000 subnetworks created")"""
-
     # create a list of threads, each thread is an instance of a nonfa subnet
     threads = [
         Create_Individual_Nonfa_Subnetwork_Thread(
@@ -71,10 +55,6 @@ def create_secondary_subnetwork(
     # create a thread pool to expidite the creation of individual null subnets
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = []
-        # test: chunk out 50 stage1 random fa subnetworks
-        """stage1Subnetworks = dict(
-            list(stage1Subnetworks.items())[: len(stage1Subnetworks) // 100]
-        )"""
 
         # submit each subnetwork to the thread pool
         for index, subnet in stage1Subnetworks.items():
@@ -154,32 +134,9 @@ def p_test(stage1SubnetworksFile, stage2SubnetworksFile):
 
     return pVal
 
-    """    ic("Observed Statistic:", observedStatistic)
-        print("abs of permStatistic", np.abs(permStatistic))
-        ic(permStatistic >= observedStatistic)
-        ic(p_value)
-    """
-    """rng = np.random.default_rng()
-
-    x = stage1SubnetworksEdgeCount
-    y = stage2SubnetworksEdgeCount
-    x = norm.rvs(size=len(stage1SubnetworksEdgeCount), random_state=rng)
-    y = norm.rvs(size=len(stage2SubnetworksEdgeCount), loc=3, random_state=rng)
-    print(statistic(x, y, 0))
-
-    res = permutation_test(
-        (x, y),
-        statistic,
-        vectorized=True,
-        n_resamples=9999,
-        alternative="less",
-        random_state=rng,
-    )"""
-    # print(f"pval: {res.pvalue}")
-
 
 def main():
-    """faGenesInstance = FaGenes("Input.gmt.txt")
+    faGenesInstance = FaGenes("Input.gmt.txt")
     faGenes = faGenesInstance.fanconi_anemia_genes()
 
     nonfaGenesInstance = NonFaGenes("STRING 1.txt", faGenes=faGenes)
@@ -196,7 +153,11 @@ def main():
         stage1Subnetworks,
         edgeCount,
     ) = stage1_subnetworksInstance.create_random_subnetworks()
-    stage2_subnetworks = create_secondary_subnetwork(
+
+    # UNCOMMENTING THIS WILL RESULT IN A ~1 hr 30 min total runtime. This is the call to create the 5000 non fa subnetworks.
+    # The stage2_random_subnetworks.json file contains a sample of the last successful run of this function and is passed into the permutation test function.
+    # If this call is uncommented, no other code modifications should be required (i.e. the file passed to the p_test function will maintain the same name)
+    """stage2_subnetworks = create_secondary_subnetwork(
         "STRING 1.txt", stage1Subnetworks, nonfaBins, bins, faGenes
     )"""
 
