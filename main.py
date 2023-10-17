@@ -2,7 +2,6 @@ import random
 import json
 from math import sqrt
 import numpy as np
-import threading
 import concurrent.futures
 from components.bins import Bins
 from components.fagenes import FaGenes
@@ -14,10 +13,15 @@ from components.create_individual_nonfa_subnetwork_thread import (
 from scipy.stats import permutation_test
 from scipy.stats import norm
 
+# Globally used objects:
+# bins: an object that contains a key value pair for each edge count (calculated from the parentNetwork). key = edge count # : value = list of genes
+# nonfaBins: an object derived from the bins object containing the same structure, but the list of genes only contain nonfa genes
+# parentNetwork: a list of lists that contain a sublist per row in the STRING 1.txt file.
+
 
 # constructor type function for use in create_secondary_subnetwork.
 # this function initializes an instance of the Create_Individual_Nonfa_Subnetwork_Thread class as a thread and executes the classes run function
-# Input: nonfaBin structure (containing a bin that represents the number of edge connections and the content of the bin are strictly nonfa genes)
+# Input: nonfaBin, bins, STRING 1.txt parentNetwork, stage1 subnetwork
 # Ouput: the returned dictionary containing the individual random nonfa subnetwork, two flags used in the create_secondary_network function, and the edge count of the subnetwork
 def create_individual_nonfa_subnetwork(nonfaBin, bins, parentNetwork, subnet):
     thread = Create_Individual_Nonfa_Subnetwork_Thread(
@@ -28,7 +32,7 @@ def create_individual_nonfa_subnetwork(nonfaBin, bins, parentNetwork, subnet):
     return result
 
 
-# this function generates 5000 nanfa subnetworks (supporting the null hypothesis)
+# this function generates 5000 nanfa subnetworks
 # Input: parentNetworkFile = STRING 1.txt, nonfaBin structure, bins structure (similar to the nonfaBin structure, but includes all genes from parentNetwork), and the faGenes object
 # Output: a structure containing all 5000 random nonfa subnetworks
 def create_secondary_subnetwork(
@@ -56,7 +60,7 @@ def create_secondary_subnetwork(
         json.dump(stage2Subnetworks, outputFile)
     print("Second 5,000 subnetworks created")"""
 
-    # create a list of threads for each subnet
+    # create a list of threads, each thread is an instance of a nonfa subnet
     threads = [
         Create_Individual_Nonfa_Subnetwork_Thread(
             nonfaBin, bins, parentNetwork, subnet["subnet"]
@@ -95,44 +99,6 @@ def create_secondary_subnetwork(
     print("Second 5,000 subnetworks created")
 
     return stage2Subnetworks
-    """for index, future in enumerate(
-        concurrent.futures.as_completed(future for _, future in futures)
-    ):"""
-    """# Split the stage 1 subnetworks into batches
-    subnetwork_groups = [
-        dict(list(stage1Subnetworks.items())[i : i + 50])
-        for i in range(0, len(stage1Subnetworks), 50)
-    ]
-
-    # Create a list of threads for each batch
-    threads = []
-    for subnetwork_group in subnetwork_groups:
-        for subnet in subnetwork_group.values():
-            subnet = subnet["subnet"]
-            thread = Create_Individual_Nonfa_Subnetwork_Thread(
-                nonfaBin, bins, parentNetwork, subnet
-            )
-            threads.append(thread)
-
-    # Create a multiprocessing pool
-    pool = multiprocessing.Pool()
-
-    # Execute the threads in batches using the pool
-    batch_size = 10
-    batches = [threads[i : i + batch_size] for i in range(0, len(threads), batch_size)]
-    batch_results = []
-    for batch in batches:
-        batch_result = pool.map(execute_thread, batch)
-        batch_results.extend(batch_result)
-
-    # Combine the results from each batch
-    stage2Subnetworks = {}
-    for result in batch_results:
-        subnetIndex = result["index"]
-        stage2Subnetworks[subnetIndex] = result
-    # Close the pool
-    pool.close()
-    pool.join()"""
 
 
 # set up function for p_test
@@ -145,44 +111,75 @@ def p_test(stage1SubnetworksFile, stage2SubnetworksFile):
     stage2SubnetworksEdgeCount = []
     alpha = 0.05
 
+    # find the mean edge count of both stage 1 subnetworks and stage 2 subnetworks
     with open(stage1SubnetworksFile, "r") as file:
         stage1Subnetworks = json.load(file)
     for bin in stage1Subnetworks:
         stage1SubnetworksEdgeCount.append(stage1Subnetworks[bin]["edgeCount"])
     stage1SubnetworksMean = sum(stage1SubnetworksEdgeCount) / 5000
+    print(f"stage1Mean: {stage1SubnetworksMean}")
 
     with open(stage2SubnetworksFile, "r") as file:
         stage2Subnetworks = json.load(file)
-
-    totalEdgeCount = 0
     for bin in stage2Subnetworks:
-        binEdgeCount = 0
-        subnet = stage2Subnetworks[bin]["subnet"]
-        for item in subnet:
-            if isinstance(item, list):
-                totalEdgeCount += 1
-                binEdgeCount += 1
-        if binEdgeCount >= 1:
-            stage2SubnetworksEdgeCount.append(binEdgeCount)
-        else:
-            stage2SubnetworksEdgeCount.append(0)
+        stage2SubnetworksEdgeCount.append(stage2Subnetworks[bin]["edgeCount"])
+    stage2SubnetworksMean = sum(stage2SubnetworksEdgeCount) / 5000
+    print(f"stage2Mean: {stage2SubnetworksMean}")
 
-    stage2SubnetworksMean = totalEdgeCount / 5000
-    rng = np.random.default_rng()
+    # calculate difference in means
+    observedStatistic = stage2SubnetworksMean - stage1SubnetworksMean
+
+    numPermutations = 10000
+
+    permStatistic = np.zeros(numPermutations)
+
+    # perform the permutation test
+    for i in range(numPermutations):
+        # combine the data and shuffle it
+        combinedSubnetworks = np.concatenate(
+            (stage1SubnetworksEdgeCount, stage2SubnetworksEdgeCount)
+        )
+        np.random.shuffle(combinedSubnetworks)
+
+        # calculate the test statistic for this permutation
+        permGroup1 = combinedSubnetworks[: len(stage1SubnetworksEdgeCount)]
+        permGroup2 = combinedSubnetworks[len(stage1SubnetworksEdgeCount) :]
+        permStat = np.mean(permGroup2) - np.mean(permGroup1)
+
+        # ctore the permuted statistic
+        permStatistic[i] = permStat
+
+    # calculate the p-value by comparing the observed statistic to the permuted statistics
+    pVal = (np.abs(permStatistic) >= np.abs(observedStatistic)).mean()
+
+    return pVal
+
+    """    ic("Observed Statistic:", observedStatistic)
+        print("abs of permStatistic", np.abs(permStatistic))
+        ic(permStatistic >= observedStatistic)
+        ic(p_value)
+    """
+    """rng = np.random.default_rng()
 
     x = stage1SubnetworksEdgeCount
     y = stage2SubnetworksEdgeCount
-
-    statistic(x, y, 0)
+    x = norm.rvs(size=len(stage1SubnetworksEdgeCount), random_state=rng)
+    y = norm.rvs(size=len(stage2SubnetworksEdgeCount), loc=3, random_state=rng)
+    print(statistic(x, y, 0))
 
     res = permutation_test(
-        (x, y), statistic, vectorized=True, n_resamples=9999, alternative="less"
-    )
-    print(f"pval: {res.pvalue}")
+        (x, y),
+        statistic,
+        vectorized=True,
+        n_resamples=9999,
+        alternative="less",
+        random_state=rng,
+    )"""
+    # print(f"pval: {res.pvalue}")
 
 
 def main():
-    faGenesInstance = FaGenes("Input.gmt.txt")
+    """faGenesInstance = FaGenes("Input.gmt.txt")
     faGenes = faGenesInstance.fanconi_anemia_genes()
 
     nonfaGenesInstance = NonFaGenes("STRING 1.txt", faGenes=faGenes)
@@ -201,10 +198,14 @@ def main():
     ) = stage1_subnetworksInstance.create_random_subnetworks()
     stage2_subnetworks = create_secondary_subnetwork(
         "STRING 1.txt", stage1Subnetworks, nonfaBins, bins, faGenes
+    )"""
+
+    pVal = p_test(
+        "stage1_random_subnetworks.json",
+        "stage2_random_subnetworks.json",
     )
 
-    pVal = p_test("stage1_random_subnetworks.json", "stage2_random_subnetworks.json")
-    print(pVal)
+    print(f"P-Value: {pVal}")
 
 
 if __name__ == "__main__":
