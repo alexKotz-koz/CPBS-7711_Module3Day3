@@ -50,48 +50,6 @@ class Stage1_SubNetworks:
                 module1FASubnetwork.append(row)
         return module1FASubnetwork
 
-    # REFACTOR
-    def count_edges(self):
-        sorted_dict = self.sortedDictionary
-        edgeCountDict = {}
-        totalEdgeCount = 0
-        one = 0
-        two = 0
-        three = 0
-        four = 0
-        five = 0
-        zero = 0
-        six = 0
-        for index, item in sorted_dict.items():
-            if item["edgeCount"] == 0:
-                zero += 1
-            elif item["edgeCount"] == 1:
-                one += 1
-            elif item["edgeCount"] == 2:
-                two += 1
-            elif item["edgeCount"] == 3:
-                three += 1
-            elif item["edgeCount"] == 4:
-                four += 1
-            elif item["edgeCount"] == 5:
-                five += 1
-            elif item["edgeCount"] == 6:
-                six += 1
-        edgeCountDict["zero"] = zero
-        edgeCountDict["one"] = one
-        edgeCountDict["two"] = two
-        edgeCountDict["three"] = three
-        edgeCountDict["four"] = four
-        edgeCountDict["five"] = five
-        edgeCountDict["six"] = six
-
-        for index, item in sorted_dict.items():
-            totalEdgeCount += item["edgeCount"]
-
-        edgeCountDict["totalEdgeCount"] = totalEdgeCount
-
-        return edgeCountDict
-
     def create_individual_subnetwork(self, module1FASubnetwork):
         subnetworkToWrite = []
         flattenedSubnetwork = []
@@ -156,6 +114,5 @@ class Stage1_SubNetworks:
         print("First 5,000 subnetworks created")
 
         self.sortedDictionary = sortedDictionary
-        edgeCount = self.count_edges()
 
-        return finalDictionary, edgeCount
+        return finalDictionary
