@@ -1,0 +1,74 @@
+Sat Nov  4 14:03:55 2023    output.pstats
+
+         12061168 function calls (11940438 primitive calls) in 30.913 seconds
+
+   Ordered by: cumulative time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000   30.913   30.913 {built-in method builtins.exec}
+        1    0.052    0.052   30.913   30.913 <string>:1(<module>)
+        1    0.949    0.949   30.861   30.861 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/main.py:20(main)
+        1    0.033    0.033   14.765   14.765 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/stage1_subnetworks.py:122(create_random_subnetworks)
+     5000   11.965    0.002   14.348    0.003 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/stage1_subnetworks.py:94(create_individual_subnetwork)
+        1    4.743    4.743    8.840    8.840 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/bins.py:13(create_bins)
+        1    1.974    1.974    5.844    5.844 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/nonfagenes.py:11(extract_nonfa_genes)
+        1    0.955    0.955    3.870    3.870 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/nonfagenes.py:18(<listcomp>)
+  4006556    3.586    0.000    3.586    0.000 {method 'split' of 'str' objects}
+        1    2.635    2.635    3.149    3.149 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/bins.py:26(<listcomp>)
+     5000    0.131    0.000    2.336    0.000 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/stage1_subnetworks.py:30(generate_12_genes)
+     5000    0.142    0.000    1.934    0.000 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/stage1_subnetworks.py:16(create_loci)
+    60000    0.801    0.000    1.171    0.000 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/stage1_subnetworks.py:24(<listcomp>)
+  1972249    0.678    0.000    0.678    0.000 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/bins.py:27(<genexpr>)
+        3    0.084    0.028    0.470    0.157 /Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/json/__init__.py:120(dump)
+        9    0.462    0.051    0.462    0.051 {built-in method builtins.print}
+  2981036    0.380    0.000    0.380    0.000 {method 'strip' of 'str' objects}
+   164440    0.055    0.000    0.351    0.000 /Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/json/encoder.py:414(_iterencode)
+     5000    0.114    0.000    0.330    0.000 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/stage1_subnetworks.py:19(<listcomp>)
+278230/164440    0.136    0.000    0.296    0.000 /Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/json/encoder.py:334(_iterencode_dict)
+    60000    0.040    0.000    0.241    0.000 /Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/random.py:358(randint)
+     5008    0.223    0.000    0.232    0.000 {built-in method io.open}
+    61420    0.096    0.000    0.205    0.000 /Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/random.py:284(randrange)
+  1081731    0.143    0.000    0.143    0.000 {method 'append' of 'list' objects}
+117680/110740    0.099    0.000    0.140    0.000 /Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/json/encoder.py:278(_iterencode_list)
+    61420    0.060    0.000    0.084    0.000 /Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/random.py:235(_randbelow_with_getrandbits)
+    25423    0.033    0.000    0.059    0.000 <frozen codecs>:319(decode)
+   242045    0.037    0.000    0.037    0.000 {built-in method builtins.isinstance}
+   164437    0.035    0.000    0.035    0.000 {method 'write' of '_io.TextIOWrapper' objects}
+     5000    0.034    0.000    0.034    0.000 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/stage1_subnetworks.py:114(<listcomp>)
+     5008    0.032    0.000    0.032    0.000 {method '__exit__' of '_io._IOBase' objects}
+        4    0.023    0.006    0.031    0.008 {built-in method builtins.sorted}
+   110423    0.029    0.000    0.029    0.000 {built-in method _json.encode_basestring_ascii}
+    25423    0.027    0.000    0.027    0.000 {built-in method _codecs.utf_8_decode}
+   184260    0.026    0.000    0.026    0.000 {built-in method _operator.index}
+    60000    0.019    0.000    0.019    0.000 {method 'update' of 'dict' objects}
+    60000    0.015    0.000    0.015    0.000 {method 'add' of 'set' objects}
+    79759    0.014    0.000    0.014    0.000 {method 'getrandbits' of '_random.Random' objects}
+    61420    0.011    0.000    0.011    0.000 {built-in method builtins.len}
+    61420    0.010    0.000    0.010    0.000 {method 'bit_length' of 'int' objects}
+     5005    0.007    0.000    0.009    0.000 <frozen codecs>:309(__init__)
+    33256    0.005    0.000    0.005    0.000 {method 'setdefault' of 'dict' objects}
+        1    0.003    0.003    0.003    0.003 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/stage1_subnetworks.py:53(count_edges)
+    16920    0.003    0.000    0.003    0.000 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/bins.py:86(<lambda>)
+    16336    0.003    0.000    0.003    0.000 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/bins.py:84(<lambda>)
+    13585    0.003    0.000    0.003    0.000 {built-in method builtins.id}
+     5005    0.002    0.000    0.002    0.000 <frozen codecs>:260(__init__)
+        1    0.001    0.001    0.002    0.002 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/stage1_subnetworks.py:44(extract_fa_genes)
+     5000    0.001    0.000    0.001    0.000 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/stage1_subnetworks.py:150(<lambda>)
+     5000    0.001    0.000    0.001    0.000 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/stage1_subnetworks.py:146(<lambda>)
+     5009    0.001    0.000    0.001    0.000 {method 'items' of 'dict' objects}
+        1    0.001    0.001    0.001    0.001 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/bins.py:54(<listcomp>)
+     1025    0.000    0.000    0.000    0.000 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/bins.py:55(<genexpr>)
+        1    0.000    0.000    0.000    0.000 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/fagenes.py:7(fanconi_anemia_genes)
+        1    0.000    0.000    0.000    0.000 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/fagenes.py:12(<listcomp>)
+      584    0.000    0.000    0.000    0.000 {method 'keys' of 'dict' objects}
+        3    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/json/encoder.py:205(iterencode)
+        3    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/json/encoder.py:260(_make_iterencode)
+       12    0.000    0.000    0.000    0.000 {method 'extend' of 'list' objects}
+        1    0.000    0.000    0.000    0.000 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/stage1_subnetworks.py:6(__init__)
+        3    0.000    0.000    0.000    0.000 <frozen codecs>:186(__init__)
+        1    0.000    0.000    0.000    0.000 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/bins.py:7(__init__)
+        1    0.000    0.000    0.000    0.000 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/fagenes.py:2(__init__)
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+        1    0.000    0.000    0.000    0.000 /Users/alexsworkcomputer/Desktop/CU/CPBS_7711/Module3/M3D3/components/nonfagenes.py:5(__init__)
+
+
