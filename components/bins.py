@@ -4,8 +4,8 @@ import numpy as np
 
 
 class Bins:
-    def __init__(self, stringInputFile, m1d3InputFile, faGenes, nonfaGenes):
-        self.stringInputFile = stringInputFile
+    def __init__(self, parentNetwork, m1d3InputFile, faGenes, nonfaGenes):
+        self.parentNetwork = pare
         self.m1d3InputFile = m1d3InputFile
         self.faGenes = faGenes
         self.nonfaGenes = nonfaGenes
@@ -22,7 +22,7 @@ class Bins:
         uniqueResults = []
 
         # read in parent network and store in results set
-        with open(self.stringInputFile, "r") as file:
+        """with open(self.stringInputFile, "r") as file:
             results = [row.split("\t")[:2] for row in file]
             results = set(tuple(row) for row in results)
 
@@ -32,11 +32,11 @@ class Bins:
                 if (gene2, gene1) not in seen:
                     seen[row] = True
                     seen[(gene2, gene1)] = True
-                    uniqueResults.append(tuple(row))
+                    uniqueResults.append(tuple(row))"""
 
         # bin all genes from master network (STRING 1.txt)
         # ASSUMPTION: all genes from STRING 1.txt have at least one (node-node) connection
-        for row in uniqueResults:
+        for row in self.parentNetwork:
             if row[0] not in countPerGene:
                 countPerGene[row[0]] = 1
             elif row[0] in countPerGene:

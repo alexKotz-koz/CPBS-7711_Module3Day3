@@ -14,6 +14,7 @@ class FaUtilities:
             raise TypeError("parentNetworkFile must be a DataFrame or a string")
 
     def create_parent_network(self):
+        print("fa utilities - parent network")
         self.parentNetwork = pd.read_csv(
             self.parentNetworkFile,
             sep="\t",
@@ -39,7 +40,8 @@ class FaUtilities:
                 axis=1,
             )
         ]
-        return self.parentNetwork
+        parentNetworkDict = self.parentNetwork.to_dict("records")
+        return parentNetworkDict, self.parentNetwork
 
     def count_edges(self):
         subnetGenes = self.individualSubnetwork[1]["subnet"]
