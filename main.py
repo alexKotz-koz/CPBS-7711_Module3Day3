@@ -7,9 +7,6 @@ import itertools
 import cProfile
 import pstats
 
-from components.bins import Bins
-from components.fagenes import FaGenes
-from components.nonfagenes import NonFaGenes
 from components.module2_stage1_subnetworks import Stage1_SubNetworks
 from components.score_individual_subnet import ScoreIndividualSubnet
 from components.fa_utilities import FaUtilities
@@ -22,12 +19,6 @@ from components.module1_subnetwork import Module1Subnetwork
 
 
 def main():
-    faGenesInstance = FaGenes("Input.gmt.txt")
-    faGenes = faGenesInstance.fanconi_anemia_genes()
-
-    nonfaGenesInstance = NonFaGenes("STRING 1.txt", faGenes=faGenes)
-    nonfaGenes = nonfaGenesInstance.extract_nonfa_genes()
-
     # Create parent network
     faUtilitiesInstance = FaUtilities("STRING 1.txt")
     parentNetworkDict, parentNetworkDF = faUtilitiesInstance.create_parent_network()
@@ -36,9 +27,6 @@ def main():
         parentNetworkDict, faGenes, nonfaGenes
     )
     module1_subnetwork = module1_subnetworkInstance.create_subnetwork()"""
-
-    """binsInstance = Bins(parentNetworkDict, "results.txt", faGenes, nonfaGenes)
-    bins, nonfaBins = binsInstance.create_bins()"""
 
     stage1_subnetworksInstance = Stage1_SubNetworks(
         "results.txt", "Input.gmt.txt", "STRING 1.txt", parentNetworkDF
@@ -51,9 +39,6 @@ def main():
 
     for subnet in testData.items():
         subnet = subnet[1]["subnet"]
-        """faUtilitiesInstance = FaUtilities(parentNetworkDF, subnet, "Input.gmt.txt")
-        edgeCount = faUtilitiesInstance.count_edges()
-        print("edge: ", edgeCount)"""
         scoreIndividualSubnetInstance = ScoreIndividualSubnet(
             subnet, "Input.gmt.txt", parentNetworkDF
         )

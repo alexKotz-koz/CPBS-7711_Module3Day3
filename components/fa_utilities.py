@@ -21,8 +21,8 @@ class FaUtilities:
         else:
             self.parentNetworkFile = parentNetworkFile
 
-    def update_subnetwork(self, new_subnetwork):
-        self.individualSubnetwork = new_subnetwork
+    """def update_subnetwork(self, new_subnetwork):
+        self.individualSubnetwork = new_subnetwork"""
 
     def create_parent_network(self):
         print("fa utilities - parent network")
@@ -60,13 +60,16 @@ class FaUtilities:
         return parentNetworkDict, self.parentNetwork
 
     def count_edges(self):
-        if isinstance(self.individualSubnetwork, dict):
+        """if isinstance(self.individualSubnetwork, dict):
             subnetGenes = self.individualSubnetwork[1]["subnet"]
         else:
-            subnetGenes = self.individualSubnetwork
+            subnetGenes = self.individualSubnetwork"""
 
+        """print(
+            f"fa utilities - edge count - empty locus case - subnet: {len(subnetGenes)}{subnetGenes}"
+        )"""
         # Convert subnetGenes to a set for faster membership tests
-        subnetGenes = set(subnetGenes)
+        subnetGenes = self.individualSubnetwork
 
         mask = self.parentNetwork["gene1"].isin(subnetGenes) & self.parentNetwork[
             "gene2"
