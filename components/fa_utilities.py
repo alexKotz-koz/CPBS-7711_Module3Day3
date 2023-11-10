@@ -1,20 +1,33 @@
 import pandas as pd
 import numpy as np
+import time
 
 
 class FaUtilities:
-    def __init__(self, parentNetworkFile=None, individualSubnetwork=None):
+    def __init__(
+        self, parentNetworkFile=None, individualSubnetwork=None, inputFile=None
+    ):
         self.individualSubnetwork = individualSubnetwork
+
+        self.inputFile = inputFile
+
         if isinstance(parentNetworkFile, pd.DataFrame):
+            self.parentNetwork = parentNetworkFile
+        elif isinstance(parentNetworkFile, list):
             self.parentNetwork = parentNetworkFile
         elif isinstance(parentNetworkFile, str):
             self.parentNetworkFile = parentNetworkFile
             self.parentNetwork = pd.DataFrame()
         else:
-            raise TypeError("parentNetworkFile must be a DataFrame or a string")
+            self.parentNetworkFile = parentNetworkFile
+
+    def update_subnetwork(self, new_subnetwork):
+        self.individualSubnetwork = new_subnetwork
 
     def create_parent_network(self):
         print("fa utilities - parent network")
+        start = time.time()
+
         self.parentNetwork = pd.read_csv(
             self.parentNetworkFile,
             sep="\t",
@@ -41,37 +54,43 @@ class FaUtilities:
             )
         ]
         parentNetworkDict = self.parentNetwork.to_dict("records")
+        end = time.time()
+        ex = end - start
+        print(f"Parent Network finished in : {ex}")
         return parentNetworkDict, self.parentNetwork
 
     def count_edges(self):
-        subnetGenes = self.individualSubnetwork[1]["subnet"]
-        flatSubnetGenes = []
+        if isinstance(self.individualSubnetwork, dict):
+            subnetGenes = self.individualSubnetwork[1]["subnet"]
+        else:
+            subnetGenes = self.individualSubnetwork
 
-        for item in subnetGenes:
-            if isinstance(item, list):
-                flatSubnetGenes.extend(item)
-            else:
-                flatSubnetGenes.append(item)
+        # Convert subnetGenes to a set for faster membership tests
+        subnetGenes = set(subnetGenes)
 
-        print(self.individualSubnetwork)
-        print(flatSubnetGenes)
-
-        mask = self.parentNetwork["gene1"].isin(flatSubnetGenes) & self.parentNetwork[
+        mask = self.parentNetwork["gene1"].isin(subnetGenes) & self.parentNetwork[
             "gene2"
-        ].isin(flatSubnetGenes)
+        ].isin(subnetGenes)
 
-        # Use the mask to select the rows where both conditions are true
-        selected_rows = self.parentNetwork[mask].copy()
+        selectedRows = self.parentNetwork[mask].copy()
 
-        # Create a new column that contains a sorted tuple of gene1 and gene2
-        selected_rows["sorted_genes"] = selected_rows.apply(
-            lambda row: tuple(sorted([row["gene1"], row["gene2"]])), axis=1
-        )
+        # Use vectorized operations to create the sorted_genes column
+        selectedRows["sorted_genes"] = np.sort(
+            selectedRows[["gene1", "gene2"]], axis=1
+        ).tolist()
 
-        # Drop duplicates based on the new column
-        selected_rows.drop_duplicates(subset="sorted_genes", inplace=True)
+        selectedRows.drop_duplicates(subset="sorted_genes", inplace=True)
 
-        # Count the number of unique edges
-        edgeCount = len(selected_rows)
+        edgeCount = len(selectedRows)
 
         return edgeCount
+
+    def extract_loci(self):
+        loci = {}
+        with open(self.inputFile, "r") as file:
+            for line in file:
+                # line = line.split()
+                name = line.split()
+                loci[name[3]] = line.strip().split("\t")[2:]
+        return loci
+        # print(f"loci: {loci} \n")

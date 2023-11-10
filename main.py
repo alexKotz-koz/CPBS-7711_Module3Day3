@@ -32,16 +32,16 @@ def main():
     faUtilitiesInstance = FaUtilities("STRING 1.txt")
     parentNetworkDict, parentNetworkDF = faUtilitiesInstance.create_parent_network()
 
-    module1_subnetworkInstance = Module1Subnetwork(
+    """module1_subnetworkInstance = Module1Subnetwork(
         parentNetworkDict, faGenes, nonfaGenes
     )
-    module1_subnetwork = module1_subnetworkInstance.create_subnetwork()
+    module1_subnetwork = module1_subnetworkInstance.create_subnetwork()"""
 
-    binsInstance = Bins(parentNetworkDict, "results.txt", faGenes, nonfaGenes)
-    bins, nonfaBins = binsInstance.create_bins()
+    """binsInstance = Bins(parentNetworkDict, "results.txt", faGenes, nonfaGenes)
+    bins, nonfaBins = binsInstance.create_bins()"""
 
     stage1_subnetworksInstance = Stage1_SubNetworks(
-        "results.txt", "Input.gmt.txt", "STRING 1.txt"
+        "results.txt", "Input.gmt.txt", "STRING 1.txt", parentNetworkDF
     )
 
     stage1Subnetworks = stage1_subnetworksInstance.create_random_subnetworks()
@@ -50,18 +50,21 @@ def main():
     testData = dict(itertools.islice(stage1Subnetworks.items(), 3))
 
     for subnet in testData.items():
-        faUtilitiesInstance = FaUtilities(parentNetworkDF, subnet)
+        subnet = subnet[1]["subnet"]
+        """faUtilitiesInstance = FaUtilities(parentNetworkDF, subnet, "Input.gmt.txt")
         edgeCount = faUtilitiesInstance.count_edges()
-        print("edge: ", edgeCount)
-        """scoreIndividualSubnetInstance = ScoreIndividualSubnet(subnet)
-        geneScores = scoreIndividualSubnetInstance.gene_score()"""
+        print("edge: ", edgeCount)"""
+        scoreIndividualSubnetInstance = ScoreIndividualSubnet(
+            subnet, "Input.gmt.txt", parentNetworkDF
+        )
+        geneScores = scoreIndividualSubnetInstance.gene_score()
 
 
 if __name__ == "__main__":
     main()
 
     # cPROFILE
-    """cProfile.run("main()", "output.pstats")
+    cProfile.run("main()", "output.pstats")
 
     # Open a new text file in write mode
     with open("output.txt", "w") as f:
@@ -72,4 +75,4 @@ if __name__ == "__main__":
         stats.sort_stats("cumulative")
 
         # Print the statistics to the text file
-        stats.print_stats()"""
+        stats.print_stats()

@@ -1,12 +1,16 @@
 import json
 import random
+from components.fa_utilities import FaUtilities
 
 
 class Stage1_SubNetworks:
-    def __init__(self, prevFaSubnetworkFile, faInputFile, stringInputFile):
+    def __init__(
+        self, prevFaSubnetworkFile, faInputFile, stringInputFile, parentNetworkDict
+    ):
         self.prevFaSubnetworkFile = prevFaSubnetworkFile
         self.faInputFile = faInputFile
         self.stringInputFile = stringInputFile
+        self.parentNetworkDict = parentNetworkDict
         self.module1FASubnetwork = []
         self.faGenes = []
         self.sortedDictionary = {}
@@ -25,6 +29,47 @@ class Stage1_SubNetworks:
                 faGenes.update({key: {"genes": genes}})
 
         return faGenes
+
+        def count_edges(self):
+            sorted_dict = self.sortedDictionary
+            edgeCountDict = {}
+            totalEdgeCount = 0
+            one = 0
+            two = 0
+            three = 0
+            four = 0
+            five = 0
+            zero = 0
+            six = 0
+            for index, item in sorted_dict.items():
+                if item["edgeCount"] == 0:
+                    zero += 1
+                elif item["edgeCount"] == 1:
+                    one += 1
+                elif item["edgeCount"] == 2:
+                    two += 1
+                elif item["edgeCount"] == 3:
+                    three += 1
+                elif item["edgeCount"] == 4:
+                    four += 1
+                elif item["edgeCount"] == 5:
+                    five += 1
+                elif item["edgeCount"] == 6:
+                    six += 1
+            edgeCountDict["zero"] = zero
+            edgeCountDict["one"] = one
+            edgeCountDict["two"] = two
+            edgeCountDict["three"] = three
+            edgeCountDict["four"] = four
+            edgeCountDict["five"] = five
+            edgeCountDict["six"] = six
+
+            for index, item in sorted_dict.items():
+                totalEdgeCount += item["edgeCount"]
+
+            edgeCountDict["totalEdgeCount"] = totalEdgeCount
+
+            return edgeCountDict
 
     # Input: loci dictionary (faGenes)
     def generate_12_genes(self):
@@ -46,7 +91,7 @@ class Stage1_SubNetworks:
         with open(self.prevFaSubnetworkFile, "r") as file:
             for row in file:
                 row = row.split("\t")
-                row[2] = row[2].strip()
+
                 module1FASubnetwork.append(row)
         return module1FASubnetwork
 
@@ -94,25 +139,21 @@ class Stage1_SubNetworks:
             finalList.append(individualSubnetwork)
             count += 1
 
+        # edge count
+        # print(f"m2 parentnetworkdict: {type(self.parentNetworkDict)}")
+        # print(f"m2 individualSubnet = {finalList}")
+        ###REMOVE
         for index, item in enumerate(finalList):
+            """faUtilitiesInstance = FaUtilities(
+                parentNetworkFile=self.parentNetworkDF, individualSubnetwork=item
+            )
+            edgeCount = faUtilitiesInstance.count_edges()"""
             index = str(index)
-            edgeCount = 0
-            for gene in item:
-                if isinstance(gene, list):
-                    edgeCount += 1
-            finalDictionary[index] = {"edgeCount": edgeCount, "subnet": item}
-        sortedDictionary = dict(
-            sorted(finalDictionary.items(), key=lambda x: x[1]["edgeCount"])
-        )
 
-        sortedDictionary = dict(
-            sorted(finalDictionary.items(), key=lambda x: x[1]["edgeCount"])
-        )
+            finalDictionary[index] = {"subnet": item}
 
         with open("stage1_random_subnetworks.json", "w") as outputFile:
-            json.dump(sortedDictionary, outputFile)
+            json.dump(finalDictionary, outputFile)
         print("First 5,000 subnetworks created")
-
-        self.sortedDictionary = sortedDictionary
 
         return finalDictionary

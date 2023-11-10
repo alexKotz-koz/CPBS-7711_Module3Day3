@@ -1,4 +1,5 @@
 from components.fa_utilities import FaUtilities
+import time
 
 
 class Module1Subnetwork:
@@ -42,8 +43,10 @@ class Module1Subnetwork:
 
     def create_subnetwork(self):
         print("Creating parent subnetwork")
+        start = time.time()
         parentNetwork = self.parentNetwork
         faGenes = self.faGenes
+        nonFaGenes = self.nonFaGenes
         results = []
 
         # Add FA
@@ -54,12 +57,14 @@ class Module1Subnetwork:
                     results.append(row.values())
 
             # if the first gene is in faGenes, but not the second. call fx to find possible nonfagene connection
-            elif row["gene1"] in faGenes:
+            if row["gene1"] in faGenes:
                 if row["gene2"] in nonFaGenes:
-                    print(f"nonFAGene:{row['gene2']}")
-
-            elif row["gene2"] in faGenes:
+                    if row["gene1"] not in results:
+                        # print(f"nonFAGene 2:{row['gene2']}")
+                        pass
+            if row["gene2"] in faGenes:
                 if row["gene1"] not in faGenes:
+                    # print(f"nonFAGene 1:{row['gene1']}")
                     pass
 
         with open("results.txt", "w") as outputFile:
@@ -67,3 +72,6 @@ class Module1Subnetwork:
                 outputFile.write("\t".join(row) + "\n")
 
         self.check_duplicate(results)
+        end = time.time()
+        ex = end - start
+        print(f"Created M1 subnet in: {ex}")

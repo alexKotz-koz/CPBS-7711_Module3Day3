@@ -5,7 +5,7 @@ import numpy as np
 
 class Bins:
     def __init__(self, parentNetwork, m1d3InputFile, faGenes, nonfaGenes):
-        self.parentNetwork = pare
+        self.parentNetwork = parentNetwork
         self.m1d3InputFile = m1d3InputFile
         self.faGenes = faGenes
         self.nonfaGenes = nonfaGenes
@@ -37,15 +37,15 @@ class Bins:
         # bin all genes from master network (STRING 1.txt)
         # ASSUMPTION: all genes from STRING 1.txt have at least one (node-node) connection
         for row in self.parentNetwork:
-            if row[0] not in countPerGene:
-                countPerGene[row[0]] = 1
-            elif row[0] in countPerGene:
-                countPerGene[row[0]] += 1
+            if row["gene1"] not in countPerGene:
+                countPerGene[row["gene1"]] = 1
+            elif row["gene1"] in countPerGene:
+                countPerGene[row["gene1"]] += 1
 
-            if row[1] not in countPerGene:
-                countPerGene[row[1]] = 1
-            elif row[1] in countPerGene:
-                countPerGene[row[1]] += 1
+            if row["gene2"] not in countPerGene:
+                countPerGene[row["gene2"]] = 1
+            elif row["gene2"] in countPerGene:
+                countPerGene[row["gene2"]] += 1
 
         seen2 = {}
         uniqueResults2 = []
