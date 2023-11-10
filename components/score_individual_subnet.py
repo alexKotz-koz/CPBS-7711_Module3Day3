@@ -1,6 +1,7 @@
 from components.fa_utilities import FaUtilities
 import time
 import cProfile
+import numpy as np
 
 
 class ScoreIndividualSubnet:
@@ -12,46 +13,71 @@ class ScoreIndividualSubnet:
         self.loci = faUtilitiesInstance.extract_loci()
         self.canditdateGeneScores = {}
 
+    def count_edges(self, subnet):
+        # Convert subnetGenes to a set for faster membership tests
+        start = time.time()
+        subnetGenes = set(subnet)
+
+        mask = self.parentNetwork["gene1"].isin(subnetGenes) & self.parentNetwork[
+            "gene2"
+        ].isin(subnetGenes)
+
+        selectedRows = self.parentNetwork[mask].copy()
+
+        # Use vectorized operations to create the sorted_genes column
+        selectedRows["sorted_genes"] = np.sort(
+            selectedRows[["gene1", "gene2"]], axis=1
+        ).tolist()
+
+        selectedRows.drop_duplicates(subset="sorted_genes", inplace=True)
+
+        edgeCount = len(selectedRows)
+        end = time.time()
+        print(f"countEdgesTime: {end-start}")
+        return edgeCount
+
     def find_gene_locus(self, gene):
+        start = time.time()
         for locus in self.loci:
             if gene in self.loci[locus]:
+                end = time.time()
+                print(f"findgenelocus: {end-start}")
                 return self.loci[locus], locus
 
     #
     def empty_locus_case(self, locus, subnet):
+        start = time.time()
         subnet = subnet.copy()
         subnet.remove(locus)
-        faUtilitiesInstance = FaUtilities(
+        """faUtilitiesInstance = FaUtilities(
             individualSubnetwork=subnet, parentNetworkFile=self.parentNetwork
-        )
-        edgeCount = faUtilitiesInstance.count_edges()
+        )"""
+        print("empty locus case count edges")
+        edgeCount = self.count_edges(subnet)
+        end = time.time()
+        print(f"emptylocus: {end-start}")
         return edgeCount
 
     def candidate_gene_score(self, locus, gene, subnet):
-        # candidateGenesSCores = {"locusNumber":locusnumber, gene: , geneScore: }
-        individualCandidateGeneScore = {}  # {gene,genescore}
-        candidateGeneScores = []
-        # {locusNumber: , genes:[individualCandidateGeneScore]}
+        start = time.time()
 
-        subnet = subnet.copy()
-        locus = locus.copy()
         geneIndexInSubnet = subnet.index(gene)
-        # print(f"GNE index: {geneIndexInSubnet}")
 
-        faUtilitiesInstance = FaUtilities(
-            individualSubnetwork=subnet, parentNetworkFile=self.parentNetwork
-        )
+        individualCandidateGeneScore = {"gene": None, "geneScore": None}
+        candidateGeneScores = []
 
         for item in locus:
-            individualCandidateGeneScore = {}
             if item != gene:
                 subnet[geneIndexInSubnet] = item
-                # print(f"subnet after: {subnet}")
-                faUtilitiesInstance.update_subnetwork(subnet)
-                edgeCount = faUtilitiesInstance.count_edges()
+
+                print("candidate gene score count edges")
+                edgeCount = self.count_edges(subnet)
                 individualCandidateGeneScore["gene"] = item
                 individualCandidateGeneScore["geneScore"] = edgeCount
-                candidateGeneScores.append(individualCandidateGeneScore)
+                candidateGeneScores.append(individualCandidateGeneScore.copy())
+
+        end = time.time()
+        print(f"candidategenescore: {end-start}")
         return candidateGeneScores
 
     def gene_score(self):
@@ -59,11 +85,12 @@ class ScoreIndividualSubnet:
         subnet = self.individualSubnet
         geneScores = {}
         print(f"score - genescore - subnet: {subnet}")
-        faUtilitiesInstance = FaUtilities(
+
+        """faUtilitiesInstance = FaUtilities(
             individualSubnetwork=subnet, parentNetworkFile=self.parentNetwork
         )
         edgeCount = faUtilitiesInstance.count_edges()
-        print(f"Subnet edgeCount: {edgeCount}")
+        print(f"Subnet edgeCount: {edgeCount}")"""
         # 1 for each GENE in SUBNET
         for index, gene in enumerate(subnet):
             # 2 get empty locus score for each gene

@@ -63,7 +63,7 @@ def main():
 if __name__ == "__main__":
     main()
 
-    # cPROFILE
+    """# cPROFILE
     cProfile.run("main()", "output.pstats")
 
     # Open a new text file in write mode
@@ -75,4 +75,4 @@ if __name__ == "__main__":
         stats.sort_stats("cumulative")
 
         # Print the statistics to the text file
-        stats.print_stats()
+        stats.print_stats()"""
