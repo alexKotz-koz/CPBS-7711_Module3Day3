@@ -6,6 +6,8 @@ import numpy as np
 import itertools
 import cProfile
 import pstats
+import concurrent.futures
+
 
 from components.module2_stage1_subnetworks import Stage1_SubNetworks
 from components.score_individual_subnet import ScoreIndividualSubnet
@@ -37,12 +39,18 @@ def main():
     # Test Dataset
     testData = dict(itertools.islice(stage1Subnetworks.items(), 3))
 
-    for subnet in testData.items():
-        subnet = subnet[1]["subnet"]
-        scoreIndividualSubnetInstance = ScoreIndividualSubnet(
-            subnet, "Input.gmt.txt", parentNetworkDF
-        )
-        geneScores = scoreIndividualSubnetInstance.gene_score()
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        futures = []
+        for subnet in testData.items():
+            subnet = subnet[1]["subnet"]
+            scoreIndividualSubnetInstance = ScoreIndividualSubnet(
+                subnet, "Input.gmt.txt", parentNetworkDF
+            )
+            futures.append(executor.submit(scoreIndividualSubnetInstance.gene_score))
+
+        for future in concurrent.futures.as_completed(futures):
+            geneScores = future.result()
+            # process geneScores
 
 
 if __name__ == "__main__":
