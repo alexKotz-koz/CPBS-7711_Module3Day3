@@ -1,7 +1,5 @@
-import random
-import json
-from math import sqrt
 import numpy as np
+import time
 
 import itertools
 import cProfile
@@ -21,6 +19,7 @@ from components.module1_subnetwork import Module1Subnetwork
 
 
 def main():
+    start = time.time()
     # Create parent network
     faUtilitiesInstance = FaUtilities("STRING 1.txt")
     parentNetworkDict, parentNetworkDF = faUtilitiesInstance.create_parent_network()
@@ -41,7 +40,7 @@ def main():
 
     with concurrent.futures.ProcessPoolExecutor() as executor:
         futures = []
-        for subnet in testData.items():
+        for subnet in stage1Subnetworks.items():
             subnet = subnet[1]["subnet"]
             scoreIndividualSubnetInstance = ScoreIndividualSubnet(
                 subnet, "Input.gmt.txt", parentNetworkDF
@@ -50,7 +49,10 @@ def main():
 
         for future in concurrent.futures.as_completed(futures):
             geneScores = future.result()
-            # process geneScores
+
+    print(geneScores)
+    end = time.time()
+    print(f"total time: {end - start}")
 
 
 if __name__ == "__main__":
