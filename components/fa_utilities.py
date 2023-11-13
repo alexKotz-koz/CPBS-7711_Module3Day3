@@ -24,10 +24,31 @@ class FaUtilities:
     """def update_subnetwork(self, new_subnetwork):
         self.individualSubnetwork = new_subnetwork"""
 
-    def create_parent_network(self):
-        print("fa utilities - parent network")
-        start = time.time()
+    def filter_parent_network(self):
+        # Creating a filtered Parent Network: Only contains FA to FA connections. Limitation.
+        print("Filtering Parent Network for FA Genes")
+        faLoci = self.extract_loci()
+        faGenes = [string for sublist in faLoci.values() for string in sublist]
+        faNetwork = []
+        with open(self.parentNetworkFile, "r") as file:
+            for line in file:
+                line = line.strip().split("\t")[:2]
+                if line[0] in faGenes:
+                    if line[1] in faGenes:
+                        faNetwork.append(line)
+                if line[1] in faGenes:
+                    if line[0] in faGenes:
+                        faNetwork.append(line)
+        with open("faNetwork.txt", "w") as file:
+            file.write("\n".join("\t".join(sublist) for sublist in faNetwork))
+        print("FA Network Created")
+        return faNetwork
 
+    def create_parent_network(self):
+        print("Creating Parent Network")
+        start = time.time()
+        #self.filter_parent_network()
+        #substitute for "faNetwork.txt"
         self.parentNetwork = pd.read_csv(
             self.parentNetworkFile,
             sep="\t",
@@ -57,6 +78,7 @@ class FaUtilities:
         end = time.time()
         ex = end - start
         print(f"Parent Network finished in : {ex}")
+        print(self.parentNetwork)
         return parentNetworkDict, self.parentNetwork
 
     def count_edges(self):
@@ -90,10 +112,12 @@ class FaUtilities:
 
     def extract_loci(self):
         loci = {}
+        print("Extracting FA Loci")
         with open(self.inputFile, "r") as file:
             for line in file:
                 # line = line.split()
                 name = line.split()
                 loci[name[3]] = line.strip().split("\t")[2:]
+        print("Loci Extracted")
         return loci
         # print(f"loci: {loci} \n")

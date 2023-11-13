@@ -8,27 +8,28 @@ import concurrent.futures
 
 
 class ScoreIndividualSubnet:
-    def __init__(self, individualSubnet, inputFile, parentNetwork):
+    def __init__(self, individualSubnet, inputFile, parentNetwork, loci):
         self.individualSubnet = individualSubnet
         self.inputFile = inputFile
         self.parentNetwork = parentNetwork
-        faUtilitiesInstance = FaUtilities(inputFile=inputFile)
-        self.loci = faUtilitiesInstance.extract_loci()
+        self.loci = loci
         self.canditdateGeneScores = {}
 
+    # Stage 8
     def count_edges(self, subnets, emptyLocusScore, batch_size=60):
         candidateGeneScores = []
-        start = time.time()
+        # print(subnets)
+
         with concurrent.futures.ThreadPoolExecutor() as executor:
             batched_subnets = []
 
             for i in range(0, len(subnets), batch_size):
                 batched_subnets.append(subnets[i : i + batch_size])
 
-            futures = {
+            futures = [
                 executor.submit(self.process_subnet, batch, emptyLocusScore)
                 for batch in batched_subnets
-            }
+            ]
 
         for future in concurrent.futures.as_completed(futures):
             try:
@@ -36,24 +37,9 @@ class ScoreIndividualSubnet:
                 candidateGeneScores.extend(individualCandidateGeneScore)
             except Exception as exc:
                 print(f"Count Edges - Generated an exception: {exc} {emptyLocusScore}")
-        end = time.time()
-        # print(f"countEdgesTime: {end - start}")
         return candidateGeneScores
 
-    def process_empty_locus_case(self, gene, subnet):
-        mask = self.parentNetwork["gene1"].isin(subnet) & self.parentNetwork[
-            "gene2"
-        ].isin(subnet)
-        selectedRows = self.parentNetwork[mask].copy()
-
-        selectedRows["sorted_genes"] = np.sort(
-            selectedRows[["gene1", "gene2"]], axis=1
-        ).tolist()
-        selectedRows.drop_duplicates(subset=["sorted_genes"], inplace=True)
-
-        edgeCount = len(selectedRows)
-        return edgeCount
-
+    # Stage 9
     def process_subnet(self, subnet, emptyLocusScore):
         batchScores = []
         for item in subnet:
@@ -62,6 +48,7 @@ class ScoreIndividualSubnet:
             mask = self.parentNetwork["gene1"].isin(subnetGenes) & self.parentNetwork[
                 "gene2"
             ].isin(subnetGenes)
+
             selectedRows = self.parentNetwork[mask].copy()
 
             selectedRows["sorted_genes"] = np.sort(
@@ -78,12 +65,7 @@ class ScoreIndividualSubnet:
             batchScores.append(individualCandidateGeneScore)
         return batchScores
 
-    def find_gene_locus(self, gene):
-        for locus in self.loci:
-            if gene in self.loci[locus]:
-                return self.loci[locus], locus
-
-    #
+    # Stage 3
     def empty_locus_case(self, geneLocus, subnet):
         subnet = subnet.copy()
         subnet.remove(geneLocus)
@@ -92,15 +74,35 @@ class ScoreIndividualSubnet:
 
         return edgeCount
 
+    # Stage 4
+    def process_empty_locus_case(self, gene, subnet):
+        mask = self.parentNetwork["gene1"].isin(subnet) & self.parentNetwork[
+            "gene2"
+        ].isin(subnet)
+        selectedRows = self.parentNetwork[mask].copy()
+
+        selectedRows["sorted_genes"] = np.sort(
+            selectedRows[["gene1", "gene2"]], axis=1
+        ).tolist()
+        selectedRows.drop_duplicates(subset=["sorted_genes"], inplace=True)
+
+        edgeCount = len(selectedRows)
+        return edgeCount
+
+    # Stage 5
+    def find_gene_locus(self, gene):
+        for locus in self.loci:
+            if gene in self.loci[locus]:
+                return self.loci[locus], locus
+
+    # Stage 6
     def candidate_gene_score(self, locus, gene, subnet, emptyLocusScore):
         swappedSubnets = []
         geneIndexInSubnet = subnet.index(gene)
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = {
-                executor.submit(
-                    self.process_item, item, geneIndexInSubnet, subnet, emptyLocusScore
-                )
+                executor.submit(self.process_item, item, geneIndexInSubnet, subnet)
                 for item in locus
             }
 
@@ -114,25 +116,39 @@ class ScoreIndividualSubnet:
         candidateGeneScores = self.count_edges(swappedSubnets, emptyLocusScore)
         return candidateGeneScores
 
-    def process_item(self, item, geneIndexInSubnet, subnet, emptyLocusScore):
+    # Stage 7
+    def process_item(self, item, geneIndexInSubnet, subnet):
         subnet[geneIndexInSubnet] = item
         tempSubnet = subnet.copy()
         return {item: tempSubnet}
 
+    # Stage 2
     def process_gene(self, gene, subnet):
-        # 2 get empty locus score for each gene
+        # get empty locus score for each gene
+        estart = time.time()
         emptyLocusScore = self.empty_locus_case(gene, subnet)
+        eend = time.time()
+        # print(f"Empty Locus Time: {eend - estart}")
 
-        # 3 find the locus and return list of locus genes
+        # find the locus and return list of locus genes
+        lstart = time.time()
         locus, locusNumber = self.find_gene_locus(gene)
+        lend = time.time()
+        # print(f"Find Locus Time: {lend-lstart}")
 
+        # get candidate gene score for each gene in each subnet
+        cstart = time.time()
         candidateGeneScores = self.candidate_gene_score(
             locus, gene, subnet, emptyLocusScore
         )
+        cend = time.time()
+        # print(f"Candidate Gene Score Time: {cend-cstart}")
 
         return locusNumber, candidateGeneScores
 
+    # Stage 1
     def gene_score(self):
+        # print(f"Subnet Scoring Initialized for subnet: {self.individualSubnet}")
         start = time.time()
         subnet = self.individualSubnet
         geneScores = {}

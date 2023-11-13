@@ -8,6 +8,8 @@
 - This project was built using Python 3.11 on macOS Sonoma v14.0.
 - This project utilizes the concurrent module for threading from pythons standard library. 
 - Development machine: 2.8 GHz Quad-Core Intel 1.7 Processor with 16 GB memory. 
+- Libraries for visualizaiton:
+    - Matplotlib (v3.8.1), NetworkX (v3.2.1), netgraph (v4.12.11)
 
 ### Files in M3D3 directory:
 
