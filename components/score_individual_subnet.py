@@ -18,7 +18,6 @@ class ScoreIndividualSubnet:
     # Stage 8
     def count_edges(self, subnets, emptyLocusScore, batch_size=60):
         candidateGeneScores = []
-        # print(subnets)
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             batched_subnets = []
@@ -26,10 +25,10 @@ class ScoreIndividualSubnet:
             for i in range(0, len(subnets), batch_size):
                 batched_subnets.append(subnets[i : i + batch_size])
 
-            futures = [
+            futures = {
                 executor.submit(self.process_subnet, batch, emptyLocusScore)
                 for batch in batched_subnets
-            ]
+            }
 
         for future in concurrent.futures.as_completed(futures):
             try:
@@ -128,13 +127,13 @@ class ScoreIndividualSubnet:
         estart = time.time()
         emptyLocusScore = self.empty_locus_case(gene, subnet)
         eend = time.time()
-        # print(f"Empty Locus Time: {eend - estart}")
+        print(f"Empty Locus Time: {eend - estart}")
 
         # find the locus and return list of locus genes
         lstart = time.time()
         locus, locusNumber = self.find_gene_locus(gene)
         lend = time.time()
-        # print(f"Find Locus Time: {lend-lstart}")
+        print(f"Find Locus Time: {lend-lstart}")
 
         # get candidate gene score for each gene in each subnet
         cstart = time.time()
@@ -142,13 +141,13 @@ class ScoreIndividualSubnet:
             locus, gene, subnet, emptyLocusScore
         )
         cend = time.time()
-        # print(f"Candidate Gene Score Time: {cend-cstart}")
+        print(f"Candidate Gene Score Time: {cend-cstart}")
 
         return locusNumber, candidateGeneScores
 
     # Stage 1
     def gene_score(self):
-        # print(f"Subnet Scoring Initialized for subnet: {self.individualSubnet}")
+        print(f"Subnet Scoring Initialized for subnet: {self.individualSubnet}")
         start = time.time()
         subnet = self.individualSubnet
         geneScores = {}
