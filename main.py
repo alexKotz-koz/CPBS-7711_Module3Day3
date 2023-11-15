@@ -10,6 +10,7 @@ import concurrent.futures
 import matplotlib.pyplot as plt
 import networkx as nx
 from netgraph import Graph
+import community
 
 from components.module2_stage1_subnetworks import Stage1_SubNetworks
 from components.score_individual_subnet import ScoreIndividualSubnet
@@ -55,6 +56,8 @@ def average_gene_scores(geneScoresFile):
         locusId = subitem["locusId"]
         scores = subitem["scores"]
 
+        # print(f"LEN OF GENE SCORES: {gene}|{len(scores)}")
+
         averageGeneScores[gene] = {
             "averageScore": sum(scores) / len(scores),
             "locusId": locusId,
@@ -69,28 +72,31 @@ def average_gene_scores(geneScoresFile):
 
 
 def visualize_gene_scores(averageGeneScores, faNetworkFile):
-    """df = pd.DataFrame({"gene1": ["A", "B", "C", "A"], "gene2": ["D", "A", "E", "C"]})
-
-    graph = nx.from_pandas_edgelist(df, "gene1", "gene2")
-    nx.draw(graph, with_labels=True)
-    Graph(graph)"""
     faNetwork = []
 
+    # get edges from filtered parent network
     with open(faNetworkFile, "r") as file:
         for row in file:
-            row = row.split()
+            row = row.strip().split("\t")[:2]
             faNetwork.append(row)
 
-    G = nx.Graph()
-
+    G = Graph()
+    # for each of the genes in the averageGeneScores object, create a node that contains the locusId and averageScore as attributes.
     for gene, data in averageGeneScores.items():
-        # print(data["locusId"])
         G.add_node(gene, averageScore=data["averageScore"], locusId=data["locusId"])
 
+    # add edges to graph object from the filtered parent network object
+    nodesList = list(G.nodes)
     for edge in faNetwork:
         edgeOne = edge[0]
         edgeTwo = edge[1]
-        G.add_edge(edgeOne, edgeTwo)
+        # print(f"edgeOne:{edgeOne}")
+        if edgeOne in nodesList:
+            if edgeTwo in nodesList:
+                G.add_edge(edgeOne, edgeTwo)
+        elif edgeTwo in nodesList:
+            if edgeOne in nodesList:
+                G.add_edge(edgeOne, edgeTwo)
 
     color_map_dict = {
         "0": "blue",
@@ -111,37 +117,58 @@ def visualize_gene_scores(averageGeneScores, faNetworkFile):
     # Create a color map and size list based on locusId and averageScore
     color_map = []
     size_list = []
-    for node in G:
-        locusId = G.nodes[node]["locusId"]
-        averageScore = G.nodes[node]["averageScore"]
+    for item in G:
+        node = G.nodes[item]
 
-        # if averageScore > 0:
-        #    print((averageScore + 1) * 100)
-        color_map.append(
-            color_map_dict[locusId]
-        )  # Use color map dictionary for color mapping
-        size_list.append(
-            (averageScore + 1) * 100
-        )  # Add 1 to averageScore and multiply by 100 for visibility
+        if node == {}:
+            G.remove_node(item)
+            break
 
-    # Draw the graph
-    nx.draw(G, node_color=color_map, node_size=size_list, with_labels=True)
-    """fig, ax = plt.subplots()
-    Graph(
-        g,
-        node_color=node_color,  # indicates the community each belongs to
-        node_edge_width=0,  # no black border around nodes
-        edge_width=0.1,  # use thin edges, as they carry no information in this visualisation
-        edge_alpha=0.5,  # low edge alpha values accentuates bundles as they appear darker than single edges
-        node_layout="community",
-        node_layout_kwargs=dict(node_to_community=node_to_community),
-        ax=ax,
-    )"""
+        locusId = node["locusId"]
+        averageScore = node["averageScore"]
+
+        color_map.append(color_map_dict[locusId])
+        size_list.append((averageScore + 1) * 100)
+
+    # Step 1: Create a dictionary to store the positions of the nodes
+    pos = {}
+
+    # Step 2: Get a list of unique locusId values
+    locusIds = set(nx.get_node_attributes(G, "locusId").values())
+
+    # Step 3: For each locusId, create a subgraph containing only the nodes with that locusId
+    for locusId in locusIds:
+        # Get the nodes with this locusId
+        nodes = [
+            node for node, attr in G.nodes(data=True) if attr["locusId"] == locusId
+        ]
+
+        # Create a subgraph with these nodes
+        subgraph = G.subgraph(nodes)
+
+        # Step 4: Apply a layout algorithm to the subgraph
+        subgraph_pos = nx.spring_layout(subgraph)
+
+        # Step 5: Add the positions of the nodes in the subgraph to the positions dictionary
+        pos.update(subgraph_pos)
+
+    # Create a node_color dictionary
+    node_color = {
+        node: color_map_dict[data["locusId"]] for node, data in G.nodes(data=True)
+    }
+    nx.draw(
+        G,
+        pos=pos,
+        node_color=color_map,
+        node_size=size_list,
+        with_labels=True,
+    )
+
     plt.show()
 
 
 def main():
-    start = time.time()
+    '''start = time.time()
     # Create parent network
     faUtilitiesInstance = FaUtilities(
         parentNetworkFile="STRING 1.txt", inputFile="Input.gmt.txt"
@@ -175,9 +202,9 @@ def main():
             geneScores = future.result()
 
     end = time.time()
-    print(f"total time: {end - start}")
+    print(f"total time: {end - start}")'''
     averageGeneScores = average_gene_scores("gene.txt")
-    visualize_gene_scores(averageGeneScores, "faNetwork.txt")
+    visualize_gene_scores(averageGeneScores, "results.txt")
 
 
 if __name__ == "__main__":

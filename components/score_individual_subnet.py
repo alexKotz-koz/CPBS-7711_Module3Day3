@@ -97,6 +97,7 @@ class ScoreIndividualSubnet:
     # Stage 6
     def candidate_gene_score(self, locus, gene, subnet, emptyLocusScore):
         swappedSubnets = []
+        # get the index of the gene in the subnet list
         geneIndexInSubnet = subnet.index(gene)
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -122,6 +123,8 @@ class ScoreIndividualSubnet:
         return {item: tempSubnet}
 
     # Stage 2
+    # Input: Gene from subnet and subnet
+    # Output:
     def process_gene(self, gene, subnet):
         # get empty locus score for each gene
         estart = time.time()
@@ -135,7 +138,7 @@ class ScoreIndividualSubnet:
         lend = time.time()
         print(f"Find Locus Time: {lend-lstart}")
 
-        # get candidate gene score for each gene in each subnet
+        # get candidate gene score for each gene in the subnet
         cstart = time.time()
         candidateGeneScores = self.candidate_gene_score(
             locus, gene, subnet, emptyLocusScore
@@ -146,17 +149,21 @@ class ScoreIndividualSubnet:
         return locusNumber, candidateGeneScores
 
     # Stage 1
+    # Input: Individual subnet
+    # Output: Average Gene Scores object
     def gene_score(self):
         print(f"Subnet Scoring Initialized for subnet: {self.individualSubnet}")
         start = time.time()
         subnet = self.individualSubnet
         geneScores = {}
 
+        # for each gene in the subnet, call process_gene which handles the intialization logic of scoring the genes within the genes' locus
         with ProcessPoolExecutor() as executor:
             futures = {
                 executor.submit(self.process_gene, gene, subnet): gene
                 for gene in subnet
             }
+            # gather results of candidate_gene_scores, as they complete and store in geneScores
             for future in concurrent.futures.as_completed(futures):
                 locusNumber, candidateGeneScores = future.result()
                 geneScores[locusNumber] = candidateGeneScores

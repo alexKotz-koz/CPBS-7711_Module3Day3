@@ -21,9 +21,6 @@ class FaUtilities:
         else:
             self.parentNetworkFile = parentNetworkFile
 
-    """def update_subnetwork(self, new_subnetwork):
-        self.individualSubnetwork = new_subnetwork"""
-
     def filter_parent_network(self):
         # Creating a filtered Parent Network: Only contains FA to FA connections. Limitation.
         print("Filtering Parent Network for FA Genes")
@@ -47,10 +44,10 @@ class FaUtilities:
     def create_parent_network(self):
         print("Creating Parent Network")
         start = time.time()
-        #self.filter_parent_network()
-        #substitute for "faNetwork.txt"
+        self.filter_parent_network()
+        # substitute for "faNetwork.txt"
         self.parentNetwork = pd.read_csv(
-            self.parentNetworkFile,
+            "faNetwork.txt",
             sep="\t",
             header=None,
             names=["gene1", "gene2"],
@@ -78,7 +75,6 @@ class FaUtilities:
         end = time.time()
         ex = end - start
         print(f"Parent Network finished in : {ex}")
-        print(self.parentNetwork)
         return parentNetworkDict, self.parentNetwork
 
     def count_edges(self):
