@@ -26,7 +26,7 @@ class ScoreIndividualSubnet:
                 batched_subnets.append(subnets[i : i + batch_size])
 
             futures = {
-                executor.submit(self.process_subnet, batch, emptyLocusScore)
+                executor.submit(self.process_subnet_count_edges, batch, emptyLocusScore)
                 for batch in batched_subnets
             }
 
@@ -39,7 +39,7 @@ class ScoreIndividualSubnet:
         return candidateGeneScores
 
     # Stage 9
-    def process_subnet(self, subnet, emptyLocusScore):
+    def process_subnet_count_edges(self, subnet, emptyLocusScore):
         batchScores = []
         for item in subnet:
             gene, subnetGenes = list(item.items())[0]
@@ -102,7 +102,12 @@ class ScoreIndividualSubnet:
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = {
-                executor.submit(self.process_item, item, geneIndexInSubnet, subnet)
+                executor.submit(
+                    self.process_item_candidate_gene_score,
+                    item,
+                    geneIndexInSubnet,
+                    subnet,
+                )
                 for item in locus
             }
 
@@ -117,7 +122,7 @@ class ScoreIndividualSubnet:
         return candidateGeneScores
 
     # Stage 7
-    def process_item(self, item, geneIndexInSubnet, subnet):
+    def process_item_candidate_gene_score(self, item, geneIndexInSubnet, subnet):
         subnet[geneIndexInSubnet] = item
         tempSubnet = subnet.copy()
         return {item: tempSubnet}
@@ -125,7 +130,7 @@ class ScoreIndividualSubnet:
     # Stage 2
     # Input: Gene from subnet and subnet
     # Output:
-    def process_gene(self, gene, subnet):
+    def process_gene_gene_score(self, gene, subnet):
         # get empty locus score for each gene
         estart = time.time()
         emptyLocusScore = self.empty_locus_case(gene, subnet)
@@ -160,7 +165,7 @@ class ScoreIndividualSubnet:
         # for each gene in the subnet, call process_gene which handles the intialization logic of scoring the genes within the genes' locus
         with ProcessPoolExecutor() as executor:
             futures = {
-                executor.submit(self.process_gene, gene, subnet): gene
+                executor.submit(self.process_gene_gene_score, gene, subnet): gene
                 for gene in subnet
             }
             # gather results of candidate_gene_scores, as they complete and store in geneScores
