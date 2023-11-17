@@ -87,31 +87,8 @@ class FaUtilities:
         print(f"Parent Network finished in : {ex}")
         return self.parentNetwork
 
-    # Input: individual random fa subnetwork
-    # Output:
-    def count_edges(self):
-        # Convert subnetGenes to a set for faster membership tests
-        subnetGenes = self.individualSubnetwork
-
-        mask = self.parentNetwork["gene1"].isin(subnetGenes) & self.parentNetwork[
-            "gene2"
-        ].isin(subnetGenes)
-
-        selectedRows = self.parentNetwork[mask].copy()
-
-        # Use vectorized operations to create the sorted_genes column
-        selectedRows["sorted_genes"] = np.sort(
-            selectedRows[["gene1", "gene2"]], axis=1
-        ).tolist()
-
-        selectedRows.drop_duplicates(subset="sorted_genes", inplace=True)
-
-        edgeCount = len(selectedRows)
-
-        return edgeCount
-
-    # Input:
-    # Output:
+    # Input: Input.gmt.txt
+    # Output: loci dictionary, containing one list per locus
     def extract_loci(self):
         loci = {}
         print("Extracting FA Loci")

@@ -13,7 +13,6 @@ import community
 from components.module2_stage1_subnetworks import Stage1_SubNetworks
 from components.score_individual_subnet import ScoreIndividualSubnet
 from components.fa_utilities import FaUtilities
-from components.module1_subnetwork import Module1Subnetwork
 
 
 # Input: geneScores text file (generated from score_individual_subnet.py), faNetwork text file (FA-FA connections)
@@ -159,7 +158,7 @@ def main():
     )
     stage1Subnetworks = stage1_subnetworksInstance.create_random_subnetworks()
 
-    # Test Dataset: cut out the first 1000 fa subnetworks to reduce runtime...abs
+    # Test Dataset: cut out the first 1000 randomly generated fa subnetworks to reduce runtime...
     # THIS LINE TRUNCATES THE 5000 SUBNETWORKS TO REDUCE RUNTIME
     # TO TEST FULL FUNCTIONALITY: COMMENT THIS LINE AND REPLACE testData.items() WITH stage1Subnetworks.items() on line 170
     testData = dict(itertools.islice(stage1Subnetworks.items(), 3))

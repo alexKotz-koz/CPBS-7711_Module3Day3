@@ -14,11 +14,12 @@ class ScoreIndividualSubnet:
         self.canditdateGeneScores = {}
 
     # Stage 8
-    # Input:
-    # Output:
+    # Input: swapped subnets (a version of the individual subnet per gene in the locus {swapped gene from locus: subnet}), emptyLocusScore
+    # Output: candidateGeneScores list (containing a list of individualGeneScores dictionaries, returned from process_subnet_count_edges)
     def count_edges(self, subnets, emptyLocusScore, batch_size=60):
         candidateGeneScores = []
 
+        # create thread pool for each of the subnets (passed from candidate_gene_score) and execute in batches (batch_size of 60 seemed to be the optimal bin size for runtime)
         with concurrent.futures.ThreadPoolExecutor() as executor:
             batched_subnets = []
 
@@ -30,6 +31,7 @@ class ScoreIndividualSubnet:
                 for batch in batched_subnets
             }
 
+        # as the threads complete store each set of individualCandidtateGeneScores dictionaries in candidateGeneScores list
         for future in concurrent.futures.as_completed(futures):
             try:
                 individualCandidateGeneScore = future.result()
@@ -39,24 +41,29 @@ class ScoreIndividualSubnet:
         return candidateGeneScores
 
     # Stage 9
-    # Input:
-    # Output:
+    # Input: batch of swapped subnetworks, emptyLocusScore
+    # Output: batch of individualCandidateGeneScore dictionaries (each containing the gene that was swapped and the gene score for that swapped subnet )
+    ## geneScore in individualCandidateGeneScore represents the contribution "gene" makes to the network
     def process_subnet_count_edges(self, subnet, emptyLocusScore):
         batchScores = []
         for item in subnet:
             gene, subnetGenes = list(item.items())[0]
 
+            # create a mask for the conditional (if either gene in the parent network data frame row is in the subnetwork) -> returns true or false
             mask = self.parentNetwork["gene1"].isin(subnetGenes) & self.parentNetwork[
                 "gene2"
             ].isin(subnetGenes)
 
             selectedRows = self.parentNetwork[mask].copy()
 
+            # sort the mask by row
             selectedRows["sorted_genes"] = np.sort(
                 selectedRows[["gene1", "gene2"]], axis=1
             ).tolist()
+
             selectedRows.drop_duplicates(subset=["sorted_genes"], inplace=True)
 
+            # count the number of times the mask conditional evaluated to true
             edgeCount = len(selectedRows)
 
             individualCandidateGeneScore = {
@@ -67,8 +74,8 @@ class ScoreIndividualSubnet:
         return batchScores
 
     # Stage 3
-    # Input:
-    # Output:
+    # Input: geneLocus (locus returned from find_gene_locus), subnet
+    # Output: edge count of empty locus case subnetwork
     def empty_locus_case(self, geneLocus, subnet):
         subnet = subnet.copy()
         subnet.remove(geneLocus)
@@ -81,6 +88,7 @@ class ScoreIndividualSubnet:
     # Input: gene in individual subnetwork, individual subnetwork
     # Output: empty locus case edge count -> process_gene_gene_score()
     def process_empty_locus_case(self, gene, subnet):
+        # create a mask with the same logic as count_edges() -> process_subnet_count_edges()
         mask = self.parentNetwork["gene1"].isin(subnet) & self.parentNetwork[
             "gene2"
         ].isin(subnet)
@@ -109,6 +117,7 @@ class ScoreIndividualSubnet:
         # get the index of the gene in the subnet list
         geneIndexInSubnet = subnet.index(gene)
 
+        # create a thread pool for each of the swapped subnets and execute process_locus_gene_candidate_gene_score for each of the swapped subnets
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = {
                 executor.submit(
@@ -120,6 +129,7 @@ class ScoreIndividualSubnet:
                 for locusGene in locus
             }
 
+        # as the threads complete, add to swappedSubnets list for use in count_edges
         for future in concurrent.futures.as_completed(futures):
             try:
                 result = future.result()
@@ -142,6 +152,8 @@ class ScoreIndividualSubnet:
     # Input: Gene from subnet and subnet
     # Output: Candidate Gene Scores object that contains:
     def process_gene_gene_score(self, gene, subnet):
+        #####NOTE: each of the function calls are timed. IF DESIRED, uncomment the print statements after each of the end times to observe the total runtime per function call
+
         # get empty locus score for each gene
         estart = time.time()
         emptyLocusScore = self.empty_locus_case(gene, subnet)
