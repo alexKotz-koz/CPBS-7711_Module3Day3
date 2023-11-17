@@ -3,8 +3,6 @@ import pandas as pd
 import time
 import json
 import itertools
-import cProfile
-import pstats
 import concurrent.futures
 
 import matplotlib.pyplot as plt
@@ -18,29 +16,32 @@ from components.fa_utilities import FaUtilities
 from components.module1_subnetwork import Module1Subnetwork
 
 
-# Input:
-# Output:
+# Input: geneScores text file (generated from score_individual_subnet.py), faNetwork text file (FA-FA connections)
+# Output: averageGeneScores dictionary that contains one item per gene {geneScores list, locusId}
 def average_gene_scores(geneScoresFile, faNetworkFile):
     geneScoresFromFile = []
     scoresByGene = {}
     averageGeneScores = {}
     faNetwork = []
+    scoresByGene = {}
+
+    # create fa network list
     with open(faNetworkFile, "r") as file:
         for line in file:
             line = line.split()
             faNetwork.append(line)
 
+    # create gene scores dictionary
     with open(geneScoresFile, "r") as file:
         for line in file:
             locusId = line.split()[0][:-1]
             locus_str = " ".join(line.split()[1:])
             locus_str = locus_str.replace("'", '"')
             locus = json.loads(locus_str)
-
             for gene in locus:
                 geneScoresFromFile.append({locusId: gene})
 
-    scoresByGene = {}
+    # restructure geneScoresFromFile for use in calculating average gene scores
     for score in geneScoresFromFile:
         locusId = ",".join(score.keys())
         score = list(score.values())[0]
@@ -50,6 +51,7 @@ def average_gene_scores(geneScoresFile, faNetworkFile):
             scoresByGene[gene]["locusId"] = locusId
         scoresByGene[gene]["scores"].append(score["geneScore"])
 
+    # calculate average gene scores and store in new dictionary
     for item in scoresByGene.items():
         gene = item[0]
         subitem = item[1]
@@ -61,12 +63,6 @@ def average_gene_scores(geneScoresFile, faNetworkFile):
             "averageScore": sum(scores) / len(scores),
             "locusId": locusId,
         }
-    """seen = []
-    for item in averageGeneScores:
-        if item in seen:
-            print(f"duplicate: {item}")
-        elif item not in seen:
-            seen.append(item)"""
 
     # if a gene from averageGeneScores is not in the FA-FA network, mark genescore as "NA"
     for gene in averageGeneScores:
@@ -76,8 +72,8 @@ def average_gene_scores(geneScoresFile, faNetworkFile):
     return averageGeneScores
 
 
-# Input:
-# Output:
+# Input: averageGeneScores dictionary, fa network text file
+# Output: creation of nextworkx network graph
 def visualize_gene_scores(averageGeneScores, faNetworkFile):
     faNetwork = []
 
@@ -95,15 +91,16 @@ def visualize_gene_scores(averageGeneScores, faNetworkFile):
                 G.add_node(
                     gene, averageScore=data["averageScore"], locusId=data["locusId"]
                 )
+
     # add edges to graph object from the filtered parent network object
     nodesList = list(G.nodes)
-
     for edge in faNetwork:
         edgeOne = edge[0]
         edgeTwo = edge[1]
         if edgeOne in nodesList and edgeTwo in nodesList:
             G.add_edge(edgeOne, edgeTwo)
 
+    # create community dictionary to group nodes by locus id
     commDict = {}
     for index, node in enumerate(list(G.nodes)):
         commDict[node] = G.nodes[node]["locusId"]
@@ -123,10 +120,13 @@ def visualize_gene_scores(averageGeneScores, faNetworkFile):
         "11": "grey",
         "12": "olive",
     }
+
+    # create node size and color maps for visualization
     nodeSize = {node: (G.nodes[node]["averageScore"] * 10) for node in list(G.nodes)}
     nodeColor = {node: color_map_dict[locusId] for node, locusId in commDict.items()}
-    nodeLabels = {node: node for node in G.nodes}
     fig, ax = plt.subplots(figsize=(10, 8))
+
+    # trigger visualization
     Graph(
         G,
         node_color=nodeColor,
@@ -146,26 +146,25 @@ def visualize_gene_scores(averageGeneScores, faNetworkFile):
 
 def main():
     start = time.time()
-    # Create parent network
+    # create filtered parent network and fa loci
     faUtilitiesInstance = FaUtilities(
         parentNetworkFile="STRING 1.txt", inputFile="Input.gmt.txt"
     )
-    parentNetworkDict, parentNetworkDF = faUtilitiesInstance.create_parent_network()
+    parentNetworkDF = faUtilitiesInstance.create_parent_network()
     loci = faUtilitiesInstance.extract_loci()
-    """module1_subnetworkInstance = Module1Subnetwork(
-        parentNetworkDict, faGenes, nonfaGenes
-    )
-    module1_subnetwork = module1_subnetworkInstance.create_subnetwork()"""
 
+    # create 5000 random fa subnetworks
     stage1_subnetworksInstance = Stage1_SubNetworks(
         "results.txt", "Input.gmt.txt", "STRING 1.txt", parentNetworkDF
     )
-
     stage1Subnetworks = stage1_subnetworksInstance.create_random_subnetworks()
 
-    # Test Dataset
-    testData = dict(itertools.islice(stage1Subnetworks.items(), 1000))
+    # Test Dataset: cut out the first 1000 fa subnetworks to reduce runtime...abs
+    # THIS LINE TRUNCATES THE 5000 SUBNETWORKS TO REDUCE RUNTIME
+    # TO TEST FULL FUNCTIONALITY: COMMENT THIS LINE AND REPLACE testData.items() WITH stage1Subnetworks.items() on line 170
+    testData = dict(itertools.islice(stage1Subnetworks.items(), 3))
 
+    # Process Pool to create gene scores for testData or stage1Subnetwork data
     with concurrent.futures.ProcessPoolExecutor() as executor:
         futures = []
         for subnet in testData.items():
@@ -175,28 +174,17 @@ def main():
             )
             futures.append(executor.submit(scoreIndividualSubnetInstance.gene_score))
 
+        # as each process completes store the results in geneScores
         for future in concurrent.futures.as_completed(futures):
             geneScores = future.result()
 
-    end = time.time()
-    print(f"total time: {end - start}")
+    # calculate average gene scores and visualize the average gene scores for every FA gene that exists in the FA network
     averageGeneScores = average_gene_scores("gene.txt", "faNetwork.txt")
     visualize_gene_scores(averageGeneScores, "results.txt")
+
+    end = time.time()
+    print(f"total time: {end - start}")
 
 
 if __name__ == "__main__":
     main()
-
-    """# cPROFILE
-    cProfile.run("main()", "output.pstats")
-
-    # Open a new text file in write mode
-    with open("output.txt", "w") as f:
-        # Create a pstats.Stats object with the text file as the stream
-        stats = pstats.Stats("output.pstats", stream=f)
-
-        # Sort the statistics by the cumulative time spent in the function
-        stats.sort_stats("cumulative")
-
-        # Print the statistics to the text file
-        stats.print_stats()"""
