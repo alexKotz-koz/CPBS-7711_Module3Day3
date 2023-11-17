@@ -159,9 +159,10 @@ def main():
     stage1Subnetworks = stage1_subnetworksInstance.create_random_subnetworks()
 
     # Test Dataset: cut out the first 1000 randomly generated fa subnetworks to reduce runtime...
+    # If desired, replace the 1000 on line 165 with the number of randomly generated fa subnetworks you wish to test ***MUST BE LESS THAN OR EQUAL TO 5000
     # THIS LINE TRUNCATES THE 5000 SUBNETWORKS TO REDUCE RUNTIME
     # TO TEST FULL FUNCTIONALITY: COMMENT THIS LINE AND REPLACE testData.items() WITH stage1Subnetworks.items() on line 170
-    testData = dict(itertools.islice(stage1Subnetworks.items(), 3))
+    testData = dict(itertools.islice(stage1Subnetworks.items(), 1000))
 
     # Process Pool to create gene scores for testData or stage1Subnetwork data
     with concurrent.futures.ProcessPoolExecutor() as executor:

@@ -19,21 +19,26 @@
 
 **results.txt**: A subnetwork of connected fa genes, derived from Module 1 Day 3 project. 
 
-**main.py**: A python script that contains the functionality of creating stage 2 subnetworks, creates an instance of the following _*classes*_ and executes thier main functions:
+**M3D3_1000_samples.png**: A visualization of the average gene scores derived from the 1000 randomly generated FA subnetworks (as specified in main.py main() and below). 
+- Node: Each node represents a single FA gene
+- Node Size: The size of each node corresponds to the average gene score.
+- Node Color: The color of each node corresponds to the locus in which the FA gene belongs to.
+- Edges: Each edge is derived from the filtered parent network (see discussion above)
+- Edges are bundled together to minimize clutter of the image and have no significance.
 
-- **bins.py**: Creates and returns two objects (bins and nfaBins). bins contains a dictionary of # edge connections: genes that contain that number of edge connections from STRING 1.txt. nfaBins, a subset of bins object that strictly contains non FA genes.
-- **create_individual_nonfa_subnetwork_tread.py**: Creates and returns an individual stage 2 non FA subnetwork.
-- **fagenes.py**: Creates and returns an object containing FA genes, generated from Input.gmt.txt
-- **nonfagenes.py**: Creates and returns an object containing non FA genes, generated using STRING 1.txt and faGenes object.
-- **stage1_subnetworks.py**: Creates and returns 5000 stage 1 FA subnetworks.
+
+**main.py**: A python script that contains the functionality of averaging the gene scores and visualizing the average gene scores, creates an instance of the following _*classes*_ and executes thier main functions:
+
+- **fa_utilities.py**: Contains utility functions that can be used for other iterations of this project.
+- **py**: Creates and returns an individual stage 2 non FA subnetwork.
+- **score_individual_subnet.py**: Creates a gene score for every FA gene, given the individual random FA subnetwork.
+- **module2_stage1_subnetworks.py**: Creates and returns 5000 FA subnetworks.
 
 #### The following files are all samples, generated from a successful run of the project.
 
-- **bins.json**
-- **nfabins.json**
+- **gene.txt**
+- **faNetwork.txt**
 - **stage1_random_subnetworks.json**
-- **stage2_random_subnetworks.json**: Note - The current functionality of this project does not create a new version of this file. To create a new version of this file, please uncomment the create_secondary_subnetwork() call within the main function of main.py
-- **stage2_random_subnetworks_v1.json**: A supplementary file, referenced in the writeup (M2D2 HW.pdf). This file is not being used in the project. 
 
 
 ### Setup and Configuration:
@@ -52,7 +57,7 @@
 
     Example: 
         
-        cd ~\Desktop\M2D3\
+        cd ~\Desktop\M3D3\
 
 3. Run the main.py file using python interpreter.
 
@@ -61,19 +66,14 @@
     Example:
 
         python3 main.py
-_***The project will take roughly 2 minutes to execute without the call to create_secondary_subnetwork()._
+_***The project will take roughly 52 minutes to execute without adjustments to main.py(), as specified below.***_
 
 <hr>
 
 ## Results:
 
-Upon successful execution, the json files (minus the stage2_random_subnetworks.json, if left commented) will be replaced and the output of this project will print the means of stage 1 and stage 2 subnetworks, along with the resulting empirical p-value.
+Upon successful execution, a network graph will populate using pythons GUI window that visualizes the average gene scores.
 
-Note: If desired, uncomment the call to create_secondary_subnetworks() under the main function within the main.py file, to generate a new stage2_random_subnetworks.json file and recieve a new stage2 edge count mean. 
-
-
-### References:
-
-- [Permutation concepts 1](https://towardsdatascience.com/how-to-use-permutation-tests-bacc79f45749)
-- [Permutation concepts 2](https://www.jwilber.me/permutationtest/)
-- [concurrent threading module](https://docs.python.org/3/library/concurrent.futures.html)
+Note: 
+- If desired, refer to the comments in the main.py -> main() to run this project on all 5000 random FA subnetworks. 
+- **The visualization component takes roughly 5 minutes to execute, depending on the local computer hardware resources**
