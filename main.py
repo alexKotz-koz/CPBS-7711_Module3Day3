@@ -131,15 +131,13 @@ def visualize_gene_scores(averageGeneScores, faNetworkFile):
         G,
         node_color=nodeColor,
         node_size=nodeSize,
-        node_edge_width=0,
+        node_edge_width=0.2,
         edge_width=0.1,
         edge_alpha=0.5,
         node_layout="community",
         node_layout_kwargs=dict(node_to_community=commDict),
-        node_labels=nodeLabels,
-        edge_layout="bundled",
-        node_label_size=10,
         node_alpha=0.75,
+        edge_layout="bundled",
         ax=ax,
     )
 
@@ -166,7 +164,7 @@ def main():
     stage1Subnetworks = stage1_subnetworksInstance.create_random_subnetworks()
 
     # Test Dataset
-    testData = dict(itertools.islice(stage1Subnetworks.items(), 3))
+    testData = dict(itertools.islice(stage1Subnetworks.items(), 1000))
 
     with concurrent.futures.ProcessPoolExecutor() as executor:
         futures = []
