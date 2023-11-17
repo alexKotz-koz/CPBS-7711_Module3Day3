@@ -78,14 +78,6 @@ class FaUtilities:
         return parentNetworkDict, self.parentNetwork
 
     def count_edges(self):
-        """if isinstance(self.individualSubnetwork, dict):
-            subnetGenes = self.individualSubnetwork[1]["subnet"]
-        else:
-            subnetGenes = self.individualSubnetwork"""
-
-        """print(
-            f"fa utilities - edge count - empty locus case - subnet: {len(subnetGenes)}{subnetGenes}"
-        )"""
         # Convert subnetGenes to a set for faster membership tests
         subnetGenes = self.individualSubnetwork
 
@@ -111,9 +103,7 @@ class FaUtilities:
         print("Extracting FA Loci")
         with open(self.inputFile, "r") as file:
             for line in file:
-                # line = line.split()
                 name = line.split()
                 loci[name[3]] = line.strip().split("\t")[2:]
         print("Loci Extracted")
         return loci
-        # print(f"loci: {loci} \n")

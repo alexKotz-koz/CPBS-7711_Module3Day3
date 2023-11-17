@@ -18,25 +18,31 @@ from components.fa_utilities import FaUtilities
 from components.module1_subnetwork import Module1Subnetwork
 
 
-def average_gene_scores(geneScoresFile):
+# Input:
+# Output:
+def average_gene_scores(geneScoresFile, faNetworkFile):
     geneScoresFromFile = []
     scoresByGene = {}
     averageGeneScores = {}
-    # read in averageGeneScores file
+    faNetwork = []
+    with open(faNetworkFile, "r") as file:
+        for line in file:
+            line = line.split()
+            faNetwork.append(line)
+
     with open(geneScoresFile, "r") as file:
         for line in file:
             locusId = line.split()[0][:-1]
             locus_str = " ".join(line.split()[1:])
             locus_str = locus_str.replace("'", '"')
             locus = json.loads(locus_str)
-            # create gene score dictionary for each gene
+
             for gene in locus:
                 geneScoresFromFile.append({locusId: gene})
 
-    # Group scores by gene
     scoresByGene = {}
     for score in geneScoresFromFile:
-        locusId = ",".join(score.keys())  # Convert keys to a string
+        locusId = ",".join(score.keys())
         score = list(score.values())[0]
         gene = score["gene"]
         if gene not in scoresByGene:
@@ -51,21 +57,27 @@ def average_gene_scores(geneScoresFile):
         locusId = subitem["locusId"]
         scores = subitem["scores"]
 
-        # print(f"LEN OF GENE SCORES: {gene}|{len(scores)}")
-
         averageGeneScores[gene] = {
             "averageScore": sum(scores) / len(scores),
             "locusId": locusId,
         }
-    seen = []
+    """seen = []
     for item in averageGeneScores:
         if item in seen:
             print(f"duplicate: {item}")
         elif item not in seen:
-            seen.append(item)
+            seen.append(item)"""
+
+    # if a gene from averageGeneScores is not in the FA-FA network, mark genescore as "NA"
+    for gene in averageGeneScores:
+        if not any(gene in sublist for sublist in faNetwork):
+            averageGeneScores[gene]["averageScore"] = "NA"
+
     return averageGeneScores
 
 
+# Input:
+# Output:
 def visualize_gene_scores(averageGeneScores, faNetworkFile):
     faNetwork = []
 
@@ -79,16 +91,16 @@ def visualize_gene_scores(averageGeneScores, faNetworkFile):
     # add nodes to graph from averageGeneScores and add score and locusId as attributes
     for gene, data in averageGeneScores.items():
         for row in faNetwork:
-            if gene in row:
+            if gene in row and data["averageScore"] != "NA":
                 G.add_node(
                     gene, averageScore=data["averageScore"], locusId=data["locusId"]
                 )
     # add edges to graph object from the filtered parent network object
     nodesList = list(G.nodes)
+
     for edge in faNetwork:
         edgeOne = edge[0]
         edgeTwo = edge[1]
-        # print(f"edgeOne:{edgeOne}")
         if edgeOne in nodesList and edgeTwo in nodesList:
             G.add_edge(edgeOne, edgeTwo)
 
@@ -109,47 +121,33 @@ def visualize_gene_scores(averageGeneScores, faNetworkFile):
         "9": "orange",
         "10": "purple",
         "11": "grey",
-        # Add more colors if you have more locusIds
+        "12": "olive",
     }
-    nodeSize = {node: (G.nodes[node]["averageScore"]) for node in list(G.nodes)}
+    nodeSize = {node: (G.nodes[node]["averageScore"] * 10) for node in list(G.nodes)}
     nodeColor = {node: color_map_dict[locusId] for node, locusId in commDict.items()}
     nodeLabels = {node: node for node in G.nodes}
     fig, ax = plt.subplots(figsize=(10, 8))
     Graph(
         G,
-        node_color=nodeColor,  # indicates the community each belongs to
+        node_color=nodeColor,
         node_size=nodeSize,
-        node_edge_width=0,  # no black border around nodes
-        edge_width=0.1,  # use thin edges, as they carry no information in this visualisation
-        edge_alpha=0.5,  # low edge alpha values accentuates bundles as they appear darker than single edges
+        node_edge_width=0,
+        edge_width=0.1,
+        edge_alpha=0.5,
         node_layout="community",
         node_layout_kwargs=dict(node_to_community=commDict),
         node_labels=nodeLabels,
-        node_label_size=20,
+        edge_layout="bundled",
+        node_label_size=10,
+        node_alpha=0.75,
         ax=ax,
     )
-    # Draw the nodes
-    """nx.draw_networkx_nodes(
-        G,
-        pos=nx.spring_layout(G),
-        node_color=list(nodeColor.values()),
-        node_size=list(nodeSize.values()),
-        ax=ax,
-    )
-
-    # Draw the edges
-    nx.draw_networkx_edges(G, pos=nx.spring_layout(G), width=0.1, alpha=0.5, ax=ax)
-
-    # Draw the labels
-    nx.draw_networkx_labels(
-        G, pos=nx.spring_layout(G), labels=nodeLabels, font_size=20, ax=ax
-    )"""
 
     plt.show()
 
 
 def main():
-    '''start = time.time()
+    start = time.time()
     # Create parent network
     faUtilitiesInstance = FaUtilities(
         parentNetworkFile="STRING 1.txt", inputFile="Input.gmt.txt"
@@ -183,8 +181,8 @@ def main():
             geneScores = future.result()
 
     end = time.time()
-    print(f"total time: {end - start}")'''
-    averageGeneScores = average_gene_scores("gene.txt")
+    print(f"total time: {end - start}")
+    averageGeneScores = average_gene_scores("gene.txt", "faNetwork.txt")
     visualize_gene_scores(averageGeneScores, "results.txt")
 
 
