@@ -77,3 +77,5 @@ Upon successful execution, a network graph will populate using pythons GUI windo
 Note: 
 - If desired, refer to the comments in the main.py -> main() to run this project on all 5000 random FA subnetworks. 
 - **The visualization component takes roughly 5 minutes to execute, depending on the local computer hardware resources**
+
+Google Doc Writeup: https://docs.google.com/document/d/17aR7vwX0a0qanSB3gOwSKhwjZEA5pOgFNOo72rWhN5Y/edit?usp=sharing
